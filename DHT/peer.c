@@ -9,7 +9,7 @@
 #include "uthash.h"
 #include "hashing.h"
 #include "dht.h"
-
+//what is this
 #define ACK 8
 #define GET 4
 #define SET 2

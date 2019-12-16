@@ -217,7 +217,7 @@ int main(int argc, char** argv){
                             if (send(nextSocket,peerRequest,11,0) == -1) {
                                 perror("Error in sending\n");
                             }
-                        }   
+                        }  
                     } else if (requestType == LOOKUP) {
                         //get full request
                         printf("Peer %d: received a LOOKUP Request\n", nodeID);
@@ -269,7 +269,9 @@ int main(int argc, char** argv){
                             if (send(nextSocket,peerRequest,11,0) == -1) {
                                 perror("Error in sending\n");
                             }
-                        } 
+                        }
+                        close(i);
+                        FD_CLR(i, &master); 
                     } else if (requestType == REPLY) {
                         //get full request
                         printf("Peer %d: received a REPLY Request\n", nodeID);
@@ -306,7 +308,8 @@ int main(int argc, char** argv){
                         if (chosenPeerSocket > fdmax){     // keep track of the max
                             fdmax = chosenPeerSocket;
                         }
-
+                        close(i);
+                        FD_CLR(i, &master);
                     } else if (requestType == FINAL) {
                     	hash_request_info* hashRequestInfo;
                         printf("Peer %d: received a FINAL Request\n", nodeID);

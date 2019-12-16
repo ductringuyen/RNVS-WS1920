@@ -17,12 +17,14 @@
 
 #define LOOKUP 129
 #define REPLY 130
-#define FINAL 131
-#define HASH 132
+#define STABLIZE 132
+#define NOTIFY 136
+#define JOIN 144
+#define FACK 160
+#define FINGER 192 
 
-#define unknownPeer 0
-#define thisPeer 1
-#define nextPeer 2
+#define FINAL 13
+#define HASH 5
 
 int ringHashing(unsigned char* key) {
   int hashValue = 0;
@@ -33,7 +35,7 @@ int ringHashing(unsigned char* key) {
 };
 
 int checkPeer(int nodeID, int prevID, int nextID, int hashValue) {
-	if ((hashValue <= nodeID && hashValue > prevID) || (prevID > nodeID && hashValue > prevID) || (prevID > nodeID && hashValue < nodeID)) {
+	if ((hashValue <= nodeID && hashValue > prevID) || (prevID > nodeID && hashValue > prevID) || (prevID > nodeID && hashValue < nodeID) || (nextID == -1)) {
 		return thisPeer;
 	} else if ((hashValue <= nextID && hashValue > nodeID) || (nextID < nodeID && hashValue > nodeID)) {
 		return nextPeer;
@@ -42,16 +44,13 @@ int checkPeer(int nodeID, int prevID, int nextID, int hashValue) {
 }
 
 int firstByteDecode(unsigned char* firstByte) {
-	if (*firstByte == 129) {
-		return LOOKUP;
-	}
-	else if (*firstByte == 130) {
-		return REPLY;
-	}
-	else if (*firstByte < 8){
+	if (*firstByte < 5){
 		return HASH;
-	}
-	return FINAL;	
+	} else if (*firstByte < 13 && *firstByte > 8) {
+    return FINAL;  
+  } else {
+    return *firstByte;  
+  }
 }
 
 void rv_memcpy(void* dst, void* src, unsigned int len) {
@@ -205,7 +204,7 @@ int createConnection(char* addr, char* port, int* IP) {
     
     memset(&hints, 0, sizeof hints);          // hints is empty 
     int Socket;
-    struct sockaddr_storage addrInfo;         // connector's addresponses Info
+    struct sockaddr_storage addrInfo;         // connector's addresss Info
     socklen_t addrSize;
 
     hints.ai_family = AF_INET;                 // IPv4

@@ -9,7 +9,7 @@
 #include "uthash.h"
 #include "hashing.h"
 #include "dht.h"
-//what is this
+
 #define ACK 8
 #define GET 4
 #define SET 2
@@ -18,15 +18,18 @@
 
 #define LOOKUP 129
 #define REPLY 130
-#define FINAL 131
-#define HASH 132
+#define STABLIZE 132
+#define NOTIFY 136
+#define JOIN 144
+#define FACK 160
+#define FINGER 192 
+
+#define FINAL 13
+#define HASH 5
 
 #define unknownPeer 0
 #define thisPeer 1
 #define nextPeer 2
-
-#define YES 1
-#define NO 0 
 
 
 // For the Peers
@@ -36,18 +39,28 @@ unsigned int nextID;
 
 int nodeIP;
 int nextIP;
+int prevIP;
 
 unsigned int nodePort;
 unsigned int prevPort;
 unsigned int nextPort;
 
+unsigned int friendID;
+int friendIP;
+unsigned int friendPort;
+
 int clientSocket;  // Socket to the sender of the Hash Request   
 
 int main(int argc, char** argv){
 
-    if (argc != 10) {
-        printf("Not enough arguments\n");
-        exit(1);
+    if (argc == 3) {
+    	nodeID = 0;
+    	nodePort = argv[2];
+    } else if (argc == 4) {
+    	nodeID = atoi(argv[3]);
+    	nodePort = argv[2];
+    } else if (argc == 6) {
+    	friendPort = atoi(argv[5]);
     }
 
     // For the Select function 
@@ -58,13 +71,13 @@ int main(int argc, char** argv){
 
     
     // Peer and Neighbor Info 
-    nodeID = atoi(argv[1]);
-    prevID = atoi(argv[4]);
-    nextID = atoi(argv[7]);
+    //nodeID = atoi(argv[1]);
+    //prevID = atoi(argv[4]);
+    //nextID = atoi(argv[7]);
     
-    nodePort = atoi(argv[3]);
-    prevPort = atoi(argv[6]);
-    nextPort = atoi(argv[9]);
+    //nodePort = atoi(argv[3]);
+    //prevPort = atoi(argv[6]);
+    //nextPort = atoi(argv[9]);
 
     /*-------------------------------------------- GET PEER INFO --------------------------------------------------*/
     struct addrinfo hints, *servinfo;
@@ -81,7 +94,7 @@ int main(int argc, char** argv){
 
 
     // Get Info of the actual peer   
-    status = getaddrinfo(NULL, argv[3], &hints, &servinfo);
+    status = getaddrinfo(NULL, argv[2], &hints, &servinfo);
     if (status != 0) {
         printf("getaddrinfo error: %s\n",gai_strerror(status));
         exit(1);
@@ -102,6 +115,7 @@ int main(int argc, char** argv){
         break; // sucessfully bind
     }
     
+    // Get IP of Peer
     struct sockaddr_in *ipv4 = (struct sockaddr_in*) servinfo->ai_addr;
     nodeIP = *(int*)(&ipv4->sin_addr); //////////// Where magic happen /////////////////
     freeaddrinfo(servinfo);
@@ -120,11 +134,21 @@ int main(int argc, char** argv){
         exit(1);
     }
 
-    FD_ZERO(&master);          // clear the master and temp sets
+    FD_ZERO(&master);          // clear the master and temp set
     FD_ZERO(&read_fds);	
     FD_SET(listener, &master); // add the listener to the master set
     fdmax = listener;		   // keep track of the biggest file descriptor
 
+    /*-------------------------------------------------- JOINING ---------------------------------------------------*/
+    if (argc == 6) {
+    	int friendSocket = createConnection(argv[4],argv[5],&friendIP);
+    	unsigned char* hashID = calloc(2,1);
+    	unsigned char* joinRequest = createPeerRequest(hashID,nodeID,nodeIP,nodePort,JOIN);
+    	if (send(friendSocket,joinRequest,11,0) == -1) {
+            perror("Error in sending\n");
+        }
+    }
+    /*---------------------------------------------------------------------------------------------------------------*/
     
     while(1){
 
@@ -270,6 +294,8 @@ int main(int argc, char** argv){
                                 perror("Error in sending\n");
                             }
                         } 
+                        close(i);
+                        FD_CLR(i, &master);                    
                     } else if (requestType == REPLY) {
                         //get full request
                         printf("Peer %d: received a REPLY Request\n", nodeID);
@@ -306,6 +332,71 @@ int main(int argc, char** argv){
                         if (chosenPeerSocket > fdmax){     // keep track of the max
                             fdmax = chosenPeerSocket;
                         }
+                        close(i);
+                        FD_CLR(i, &master);
+                    } else if (requestType == STABLIZE) {
+                        //get full request
+                        //printf("Peer %d: received a STABLIZE Request\n", nodeID);
+                        unsigned char* peerRequest;
+                        peerRequest = getPeerRequest(i,firstByte);
+
+                        unsigned int callerID;
+                        int callerIP;
+                        unsigned int callerPort;
+
+                        rv_memcpy(&callerID,peerRequest+3,2);
+
+                        memcpy(&callerIP,peerRequest+5,4);
+                        char ipString[INET_ADDRSTRLEN];
+                        inet_ntop(AF_INET, &callerIP, ipString, sizeof(ipString));
+                        printf("Peer %d: IP of the Predecessor: %s\n",nodeID,ipString);
+
+                        rv_memcpy(&callerPort,peerRequest+9,2);
+                        char portString[20];
+                        itoa(callerPort,portString);
+                        printf("Peer %d: Port of the Predecessor: %s\n",nodeID,portString);
+
+                        if (prevID == -1) {
+                        	prevID = callerID;
+                        	prevIP = callerIP;
+                        	prevPort = callerPort;
+                        }
+
+                        unsigned char* hashID = malloc(2);
+                        memcpy(hashID,peerRequest+1,2);
+
+                        unsigned char* notifyResponse = createPeerRequest(hashID,prevID,prevIP,prevPort,NOTIFY);
+                        int callerSocket = createConnection(ipString,portString,NULL);
+                        if (send(callerSocket,notifyResponse,11,0) == -1) {
+                            perror("Error in sending\n");
+                        }
+                        close(i);
+                        FD_CLR(i, &master);
+                    } else if (requestType == NOTIFY) {
+                    	//get full request
+                        unsigned char* peerRequest;
+                        peerRequest = getPeerRequest(i,firstByte);
+
+                        int notifiedID;
+                        rv_memcpy(&notifiedID,peerRequest+3,2);
+                        if (notifiedID == nodeID) {
+                        	continue;
+                        } else if (notifiedID > nodeID) {
+                        	nextID = notifiedID;
+                        	memcpy(&nextIP,peerRequest+5,4);
+                        	rv_memcpy(&nextPort,peerRequest+9,2);
+                        }
+                        close(i);
+                        FD_CLR(i, &master);
+                    } else if (requestType == JOIN) {
+                        unsigned char* peerRequest;
+                        peerRequest = getPeerRequest(i,firstByte);
+
+                        // I'm Here ///////////////////////////////////////////////////////////////////////////////////////                    	
+                    
+                    } else if (requestType == FACK) {
+
+                    } else if (requestType == FINGER) {
 
                     } else if (requestType == FINAL) {
                     	hash_request_info* hashRequestInfo;

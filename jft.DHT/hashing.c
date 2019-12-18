@@ -3,7 +3,7 @@
 #include "uthash.h"
 #include "hashing.h"
 
-void* keyProcessing(hashable* hTab, void* key, unsigned int kl) {
+void* keyProcessing(hashable* hTab, void* key, int kl) {
 	void* modKey;
 	if (key == NULL) return NULL;
 	for (hashable* s = hTab; s != NULL; s = s->hh.next) {
@@ -17,14 +17,14 @@ void* keyProcessing(hashable* hTab, void* key, unsigned int kl) {
 	return modKey;
 }
 
-hashable* get(hashable** hTab, void* key, unsigned int kl) {
+hashable* get(hashable** hTab, void* key, int kl) {
 	hashable *hashElem;
 	void* modKey = keyProcessing(*hTab,key,kl);
 	HASH_FIND_PTR(*hTab,&modKey,hashElem);
 	return hashElem;
 }
 
-void set(hashable** hTab, void* key, void* value, unsigned int kl, unsigned int vl) {
+void set(hashable** hTab, void* key, void* value, int kl, int vl) {
 	hashable *hashElem;
 	void* modKey = keyProcessing(*hTab,key,kl);
 	HASH_FIND_PTR(*hTab,&modKey,hashElem);
@@ -42,7 +42,7 @@ void set(hashable** hTab, void* key, void* value, unsigned int kl, unsigned int 
 	HASH_ADD_PTR(*hTab,hashKey,hashElem);
 }
 
-void delete(hashable** hTab, void* key, unsigned int kl) {
+void delete(hashable** hTab, void* key, int kl) {
 	hashable *hashElem = malloc(sizeof(hashable));
 	void* modKey = keyProcessing(*hTab,key,kl);
 	HASH_FIND_PTR(*hTab,&modKey,hashElem);

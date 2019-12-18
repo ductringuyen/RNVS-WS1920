@@ -5,6 +5,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <pthread.h>
 #include "uthash.h"
 #include "hashing.h"
 #include "dht.h"
@@ -17,7 +18,7 @@
 
 #define LOOKUP 129
 #define REPLY 130
-#define STABLIZE 132
+#define STABILIZE 132
 #define NOTIFY 136
 #define JOIN 144
 #define FACK 160
@@ -26,24 +27,41 @@
 #define FINAL 13
 #define HASH 5
 
-int ringHashing(unsigned char* key) {
-  int hashValue = 0;
-  for (int i = 0; i < 2; i++) {
-    hashValue += (int)(key[i]%80);
+#define unknownPeer 0
+#define thisPeer 1
+#define nextPeer 2
+
+#define unknown 100
+
+unsigned int ringHashing(unsigned char* key) {
+  unsigned int hashValue = 0;
+  for (unsigned int i = 0; i < 2; i++) {
+    hashValue += (unsigned int)(key[i]%80);
   }
   return hashValue;
 };
 
-int checkPeer(int nodeID, int prevID, int nextID, int hashValue) {
-	if ((hashValue <= nodeID && hashValue > prevID) || (prevID > nodeID && hashValue > prevID) || (prevID > nodeID && hashValue < nodeID) || (nextID == -1)) {
+unsigned int checkPeer(unsigned int nodeID, unsigned int prevID, unsigned int nextID, unsigned int hashValue) {
+	if ((hashValue <= nodeID && hashValue > prevID) || (prevID > nodeID && hashValue > prevID) || (prevID > nodeID && hashValue < nodeID) || (nextID == unknown)) {
 		return thisPeer;
-	} else if ((hashValue <= nextID && hashValue > nodeID) || (nextID < nodeID && hashValue > nodeID)) {
+	} else if ((hashValue <= nextID && hashValue > nodeID) || (nextID < nodeID && hashValue > nodeID) || (nextID < nodeID && hashValue < nextID)) {
 		return nextPeer;
 	}
 	return unknownPeer;
 }
 
-int firstByteDecode(unsigned char* firstByte) {
+unsigned int checkJoinPeer(unsigned int nodeID, unsigned int prevID, unsigned int nextID, unsigned int callerID) {
+  // 1 Peer in Ring
+  if (nextID == unknown) return thisPeer;
+  // 2 Peers in Ring
+  if (nextID == prevID && nodeID < nextID && callerID > nextID) return thisPeer;
+  // 3 or more Peers in Ring           
+  if (nodeID > callerID && prevID < callerID) return thisPeer;
+  if (nodeID < callerID && prevID > nodeID && nextID != prevID) return thisPeer;
+  return unknownPeer;
+}
+
+unsigned int firstByteDecode(unsigned char* firstByte) {
 	if (*firstByte < 5){
 		return HASH;
 	} else if (*firstByte < 13 && *firstByte > 8) {
@@ -56,25 +74,25 @@ int firstByteDecode(unsigned char* firstByte) {
 void rv_memcpy(void* dst, void* src, unsigned int len) {
   unsigned char* dstByte = (unsigned char*) dst;
   unsigned char* srcByte = (unsigned char*) src;
-  for (int i = 0; i < len; i++) {
+  for (unsigned int i = 0; i < len; i++) {
     dstByte[i] = srcByte[len-1-i];
   }
 }
 
 void hashHeaderAnalize(unsigned char* header, unsigned int* keyLen, unsigned int* valueLen) {
-	*keyLen = 256*(header[0]) + header[1];
-	*valueLen = 16777216*(header[2]) + 65536*(header[3]) + 256*(header[4]) + header[5];
+	*keyLen = (header[0]<<8) + header[1];
+	*valueLen = (header[2]<<24) + (header[3]<<16) + (header[4]<<8) + header[5];
 }
 
-hash_request_info* getHashRequestInfo(int socketfd, unsigned char* firstByte){
+hash_request_info* getHashRequestInfo(unsigned int socketfd, unsigned char* firstByte){
     hash_request_info* info  = malloc(sizeof(hash_request_info*));
 	  unsigned char* header;
 	  unsigned char* data;
 	  unsigned int opt;
     unsigned int keyLen;
     unsigned int valueLen;
-    int written = 0;
-    int msglen = 0;
+    unsigned int written = 0;
+    unsigned int msglen = 0;
   
     info->callerSocket = socketfd;
     info->opt = *firstByte;
@@ -169,7 +187,7 @@ unsigned char* peerHashing(hashable** hTab, hash_request_info* hashRequestInfo, 
     return response;
 }
 
-unsigned char* createPeerRequest(unsigned char* hashID, unsigned int nodeID, unsigned int nodeIP, unsigned int nodePort, int operation) {
+unsigned char* createPeerRequest(unsigned char* hashID, unsigned int nodeID, unsigned int nodeIP, unsigned int nodePort, unsigned int operation) {
 	unsigned char *request = malloc(11);
 	*request = operation;
 	memcpy(request+1,hashID,2);
@@ -179,10 +197,10 @@ unsigned char* createPeerRequest(unsigned char* hashID, unsigned int nodeID, uns
 	return request;
 }
 
-unsigned char* getPeerRequest(int socketfd, unsigned char* firstByte) {
+unsigned char* getPeerRequest(unsigned int socketfd, unsigned char* firstByte) {
 	unsigned char* request = malloc(11);
 	unsigned char* data = malloc(10);
-	int msglen = recv(socketfd,data, 10, 0);
+	unsigned int msglen = recv(socketfd,data, 10, 0);
     if (msglen == -1) {
        	perror("Error in receiving\n");
        	exit(0);
@@ -193,17 +211,17 @@ unsigned char* getPeerRequest(int socketfd, unsigned char* firstByte) {
     return request;
 }
 
-char* itoa(int num, char *str) {
+char* itoa(unsigned int num, char *str) {
   sprintf(str, "%d", num);
   return str;
 }
 
-int createConnection(char* addr, char* port, int* IP) {
+unsigned int createConnection(char* addr, char* port, unsigned int* IP) {
     struct addrinfo hints, *servinfo;
-    int status;
+    unsigned int status;
     
     memset(&hints, 0, sizeof hints);          // hints is empty 
-    int Socket;
+    unsigned int Socket;
     struct sockaddr_storage addrInfo;         // connector's addresss Info
     socklen_t addrSize;
 
@@ -226,7 +244,7 @@ int createConnection(char* addr, char* port, int* IP) {
         // IF SOCKET IS CREATED, TRY TO CONNECT TO THE SERVER
         if (connect(Socket, servinfo->ai_addr, servinfo->ai_addrlen) == -1) {
             close(Socket);
-            perror("Problems with creating connection\n");
+            //perror("Problems with creating connection\n");
             continue;
         }
         break; // sucessfully connect
@@ -234,13 +252,13 @@ int createConnection(char* addr, char* port, int* IP) {
     // Get IP as a number
     if (IP != NULL) {
       struct sockaddr_in *ipv4 = (struct sockaddr_in*) servinfo->ai_addr;
-      *IP = *(int*)(&ipv4->sin_addr);         //////////// Where magic happen /////////////////
+      *IP = *(unsigned int*)(&ipv4->sin_addr);         //////////// Where magic happen /////////////////
     }
     freeaddrinfo(servinfo);
     return Socket;
 }
         
-int put_in_the_list(hash_request_info_list* list, hash_request_info* hashRequestInfo) {
+unsigned int put_in_the_list(hash_request_info_list* list, hash_request_info* hashRequestInfo) {
     if (list->head == NULL) {
         list->head = hashRequestInfo;
         return 0;
@@ -254,7 +272,7 @@ int put_in_the_list(hash_request_info_list* list, hash_request_info* hashRequest
     return 0;
 }
 
-int remove_info_from_list(hash_request_info_list* list, hash_request_info* hashRequestInfo) {
+unsigned int remove_info_from_list(hash_request_info_list* list, hash_request_info* hashRequestInfo) {
     hash_request_info* tmp;
     tmp = list->head;
     if (tmp == hashRequestInfo) {
@@ -293,7 +311,7 @@ void freeInfo(hash_request_info* hashRequestInfo) {
     free(hashRequestInfo);
 }
 
-hash_request_info* getClientRequestInfo(hash_request_info_list* list, hash_request_info* hashRequestInfo, int socketfd) {
+hash_request_info* getClientRequestInfo(hash_request_info_list* list, hash_request_info* hashRequestInfo, unsigned int socketfd) {
     hash_request_info* tmp;
     tmp = list->head;
     while (tmp != NULL) {

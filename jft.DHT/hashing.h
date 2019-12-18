@@ -2,18 +2,18 @@ typedef struct s_hashable
 {
 	void* hashKey;
 	void* hashValue;
-	unsigned int keyLen;
-	unsigned int valueLen;
+	int keyLen;
+	int valueLen;
 	UT_hash_handle hh;
 } hashable ;
 
-void* keyProcessing(hashable* hTab, void* key, unsigned int kl);
+void* keyProcessing(hashable* hTab, void* key, int kl);
 
-hashable* get(hashable** hTab, void* key, unsigned int kl);
+hashable* get(hashable** hTab, void* key, int kl);
 
-void set(hashable** hTab, void* key, void* value, unsigned int kl, unsigned int vl); 
+void set(hashable** hTab, void* key, void* value, int kl, int vl); 
 
-void delete(hashable** hTab, void* key, unsigned int kl);
+void delete(hashable** hTab, void* key, int kl);
 
 
 

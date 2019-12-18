@@ -35,7 +35,7 @@ int ringHashing(unsigned char* key) {
 int checkPeer(int nodeID, int prevID, int nextID, int hashValue) {
 	if ((hashValue <= nodeID && hashValue > prevID) || (prevID > nodeID && hashValue > prevID) || (prevID > nodeID && hashValue < nodeID)) {
 		return thisPeer;
-	} else if ((hashValue <= nextID && hashValue > nodeID) || (nextID < nodeID && hashValue > nodeID)) {
+	} else if ((hashValue <= nextID && hashValue > nodeID) || (nextID < nodeID && hashValue > nodeID) || (nextID < nodeID && hashValue < nextID)) {
 		return nextPeer;
 	}
 	return unknownPeer;

@@ -31,7 +31,7 @@
 #define thisPeer 1
 #define nextPeer 2
 
-#define unknown 100
+#define unknown 101
 
 unsigned int ringHashing(unsigned char* key) {
   unsigned int hashValue = 0;

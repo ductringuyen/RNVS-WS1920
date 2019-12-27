@@ -32,7 +32,7 @@
 #define thisPeer 1
 #define nextPeer 2
 
-#define unknown 100
+#define unknown 101
 
 
 // For the Peers
@@ -513,7 +513,7 @@ unsigned int main(unsigned int argc, char** argv) {
                         FD_CLR(i, &master);
                     
                     } else if (requestType == FACK) {
-
+                       
                     } else if (requestType == FINGER) {
 
                     } else if (requestType == FINAL) {

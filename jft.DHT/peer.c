@@ -59,28 +59,31 @@ pthread_mutex_t mutex;
 void* stabilizing(void* arg) {
 	while(1) {
 		pthread_mutex_lock(&mutex);
-		if(nextID != unknown) {
+		while (nextID != unknown) {
+			pthread_mutex_unlock(&mutex);
 			unsigned char* hashID = calloc(2,1);
 			unsigned char* stabilizeRequest = createPeerRequest(hashID,nodeID,nodeIP,nodePort,STABILIZE);
             //create Connection to the next Peer
+            pthread_mutex_lock(&mutex);
             char ipString[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, &nextIP, ipString, sizeof(ipString));
             char portString[20];
             itoa(nextPort,portString);
             unsigned int socket = createConnection(ipString,portString,NULL);                            
             //send STABILIZE Request
+            printf("Peer %d Stabilizing to Peer %d\n", nodeID, nextID);
+            pthread_mutex_unlock(&mutex);
             if (send(socket,stabilizeRequest,11,0) == -1) {
                 perror("Error in sending\n");
             }
             sleep(2);
+            pthread_mutex_lock(&mutex);
         }
         pthread_mutex_unlock(&mutex);
-        //sleep(2);
-        //printf("Stabilizing....\n");
-	}
+    }
 }
 
-unsigned int main(unsigned int argc, char** argv) {
+int main(int argc, char** argv) {
 
 	prevID = unknown;
 	nextID = unknown;
@@ -168,10 +171,10 @@ unsigned int main(unsigned int argc, char** argv) {
     if (argc == 6) {
     	printf("Peer %d: I want to join\n", nodeID);
     	unsigned int friendSocket = createConnection(argv[4],argv[5],&friendIP);
-    	printf("Peer %d: got connected\n", nodeID);
+    	//printf("Peer %d: got connected\n", nodeID);
     	unsigned char* hashID = calloc(2,1);
     	unsigned char* joinRequest = createPeerRequest(hashID,nodeID,nodeIP,nodePort,JOIN);
-    	printf("Peer %d: Join Request created\n", nodeID);
+    	//printf("Peer %d: Join Request created\n", nodeID);
     	if (send(friendSocket,joinRequest,11,0) == -1) {
             perror("Error in sending\n");
         }
@@ -222,9 +225,8 @@ unsigned int main(unsigned int argc, char** argv) {
                         close(i);           
                         FD_CLR(i, &master); 
                     }
-                    printf("Peer %d: Got something\n", nodeID);
                     requestType = firstByteDecode(firstByte);
-                    printf("Peer %d: decode the first Byte %d\n", nodeID, requestType);                                               
+                    //printf("Peer %d got Something: decode the first Byte %d\n", nodeID, requestType);                                               
                                         
                     if (requestType == HASH) {
                         printf("Peer %d: received a Hash Request\n", nodeID);
@@ -393,7 +395,6 @@ unsigned int main(unsigned int argc, char** argv) {
 
                     } else if (requestType == STABILIZE) {
                         //get full request
-                        printf("Peer %d: received a STABILIZE Request\n", nodeID);
                         unsigned char* peerRequest;
                         peerRequest = getPeerRequest(i,firstByte);
 
@@ -402,6 +403,7 @@ unsigned int main(unsigned int argc, char** argv) {
                         unsigned int callerPort = 0;
 
                         rv_memcpy(&callerID,peerRequest+3,2);
+                        printf("Peer %d: received a STABILIZE Request from Peer %d\n", nodeID, callerID);
 
                         memcpy(&callerIP,peerRequest+5,4);
                         char ipString[INET_ADDRSTRLEN];
@@ -438,7 +440,8 @@ unsigned int main(unsigned int argc, char** argv) {
 
                         unsigned int notifiedID;
                         rv_memcpy(&notifiedID,peerRequest+3,2);
-                        
+                        printf("Peer %d: Notified ID is %d\n", nodeID, notifiedID);
+
                         if (notifiedID == nodeID) {
                            	continue;
                         }
@@ -474,9 +477,10 @@ unsigned int main(unsigned int argc, char** argv) {
                         	inet_ntop(AF_INET, &callerIP, ipString, sizeof(ipString));
                         	char portString[20];
                         	itoa(callerPort,portString);
-                        	printf("Peer %d: Join Caller ID is %d\n", nodeID, callerID);
-                        	printf("Peer %d: Join Caller IP is %s\n", nodeID, ipString);
-                        	printf("Peer %d: Join Caller Port is %d\n", nodeID, callerPort);
+                        	printf("Peer %d: I'm responsible for the Joining of Peer %d\n", nodeID, callerID);
+                        	//printf("Peer %d: Join Caller ID is %d\n", nodeID, callerID);
+                        	//printf("Peer %d: Join Caller IP is %s\n", nodeID, ipString);
+                        	//printf("Peer %d: Join Caller Port is %d\n", nodeID, callerPort);
                         	unsigned int callerSocket = createConnection(ipString,portString,NULL);
                         	printf("Peer %d: I'm about to send a Notify, Caller IP is: %s\n", nodeID, ipString);
                         	// Create and send the Notify Response
@@ -493,8 +497,8 @@ unsigned int main(unsigned int argc, char** argv) {
                         		nextID = callerID;
                         		nextIP = callerIP;
                         		nextPort = callerPort;
-                        		printf("Peer %d: my next is %d\n", nodeID, nextID);
                         	}
+                        	printf("Peer %d: my next and my prev are %d and %d\n", nodeID, nextID,prevID);
                         	
                         } else if (checkJoinPeer(nodeID, prevID, nextID, callerID) == unknownPeer) {
                         	// Connect to the next Peer

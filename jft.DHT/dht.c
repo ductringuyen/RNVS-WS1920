@@ -36,7 +36,7 @@
 unsigned int ringHashing(unsigned char* key) {
   unsigned int hashValue = 0;
   for (unsigned int i = 0; i < 2; i++) {
-    hashValue += (unsigned int)(key[i]%80);
+    hashValue += (unsigned int)(key[i]%51);
   }
   return hashValue;
 };
@@ -188,7 +188,7 @@ unsigned char* peerHashing(hashable** hTab, hash_request_info* hashRequestInfo, 
 }
 
 unsigned char* createPeerRequest(unsigned char* hashID, unsigned int nodeID, unsigned int nodeIP, unsigned int nodePort, unsigned int operation) {
-	unsigned char *request = malloc(11);
+	unsigned char *request = calloc(11,1);
 	*request = operation;
 	memcpy(request+1,hashID,2);
 	rv_memcpy(request+3,&nodeID,2);

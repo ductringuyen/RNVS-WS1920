@@ -59,7 +59,7 @@ pthread_mutex_t mutex;
 void* stabilizing(void* arg) {
 	while(1) {
 		pthread_mutex_lock(&mutex);
-		while (nextID != unknown) {
+		while (nextID < unknown) {
 			pthread_mutex_unlock(&mutex);
 			unsigned char* hashID = calloc(2,1);
 			unsigned char* stabilizeRequest = createPeerRequest(hashID,nodeID,nodeIP,nodePort,STABILIZE);
@@ -315,7 +315,8 @@ int main(int argc, char** argv) {
                             printf("Peer %d: my next pal %d is responsible for the request\n", nodeID,nextID);
                             unsigned char* hashID = malloc(2);
                             memcpy(hashID,peerRequest+1,2);
-                            
+
+                            // Get Info of the original Peer
                             unsigned int firstPeerIP;
                             memcpy(&firstPeerIP,peerRequest+5,4);
                             char ipString[INET_ADDRSTRLEN];
@@ -327,14 +328,14 @@ int main(int argc, char** argv) {
                             itoa(firstPeerPort,portString);
                             
                             // Get the next IP
-                            status = getaddrinfo(argv[8], argv[9], &hints, &servinfo);
-                            if (status != 0) {
-                                printf("getaddrinfo error: %s\n",gai_strerror(status));
-                                exit(1);
-                            }    
-                            struct sockaddr_in *ipv4 = (struct sockaddr_in*) servinfo->ai_addr;
-                            nextIP = *(unsigned int*)(&ipv4->sin_addr); //////////// Where magic happen /////////////////
-                            freeaddrinfo(servinfo);
+                            //status = getaddrinfo(argv[8], argv[9], &hints, &servinfo);
+                            //if (status != 0) {
+                            //    printf("getaddrinfo error: %s\n",gai_strerror(status));
+                            //    exit(1);
+                            //}    
+                            //struct sockaddr_in *ipv4 = (struct sockaddr_in*) servinfo->ai_addr;
+                            //nextIP = *(unsigned int*)(&ipv4->sin_addr); //////////// Where magic happen /////////////////
+                            //freeaddrinfo(servinfo);
                             // Got the next IP
 
                             peerRequest = createPeerRequest(hashID,nextID,nextIP,nextPort,REPLY);
@@ -346,7 +347,12 @@ int main(int argc, char** argv) {
                             }  
                         } else if (checkPeer(nodeID,prevID,nextID,hashValue) == unknownPeer) {
                             printf("Peer %d: I dunno but I'll ask my next pal %d\n", nodeID,nextID);
-                            nextSocket = createConnection(argv[8],argv[9],&nextIP);
+                            //create Connection to the next Peer
+                        	char ipString[INET_ADDRSTRLEN];
+                        	inet_ntop(AF_INET, &nextIP, ipString, sizeof(ipString));
+                        	char portString[20];
+                        	itoa(nextPort,portString);
+                        	nextSocket = createConnection(ipString,portString,NULL);
                             if (send(nextSocket,peerRequest,11,0) == -1) {
                                 perror("Error in sending\n");
                             }
@@ -438,7 +444,7 @@ int main(int argc, char** argv) {
                         unsigned char* peerRequest;
                         peerRequest = getPeerRequest(i,firstByte);
 
-                        unsigned int notifiedID;
+                        unsigned int notifiedID  = 0;
                         rv_memcpy(&notifiedID,peerRequest+3,2);
                         printf("Peer %d: Notified ID is %d\n", nodeID, notifiedID);
 
@@ -502,6 +508,7 @@ int main(int argc, char** argv) {
                         	
                         } else if (checkJoinPeer(nodeID, prevID, nextID, callerID) == unknownPeer) {
                         	// Connect to the next Peer
+                        	printf("Peer %d on Joining: I dunno but I'll ask my next Peer %d\n", nodeID, nextID);
                         	char ipString[INET_ADDRSTRLEN];
                         	inet_ntop(AF_INET, &nextIP, ipString, sizeof(ipString));
                         	char portString[20];

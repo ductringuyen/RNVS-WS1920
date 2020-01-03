@@ -13,14 +13,12 @@ typedef struct s_hash_request_list {
     hash_request_info* head;
 } hash_request_info_list;
 
-/*typedef struct s_stabilizeInfo {
-	unsigned int* nodeID;
-	unsigned int* nodeIP;
-	unsigned int* nodePort;
-	unsigned int* nextID;
-	unsigned int* nextIP;
-	unsigned int* nextPort; 
-}*/
+typedef struct s_fingerTable_elem {
+	unsigned int start;
+	unsigned int peerID;
+	unsigned int peerIP;
+	unsigned int peerPort;
+} fingerTable_elem;
 
 unsigned int ringHashing(unsigned char* key);
 
@@ -58,5 +56,8 @@ void freeInfo(hash_request_info* hashRequestInfo);
 
 hash_request_info* getClientRequestInfo(hash_request_info_list* list, hash_request_info* hashRequestInfo, unsigned int socketfd);
 
+unsigned int exponential_of_two(unsigned int n);
 
+unsigned int check_finger_table_input(unsigned int ft_input, unsigned int nodeID);
 
+int finger_table_lookup(unsigned int hashValue, fingerTable_elem **ft_Elem);

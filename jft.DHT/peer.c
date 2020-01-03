@@ -32,7 +32,8 @@
 #define thisPeer 1
 #define nextPeer 2
 
-#define unknown 101
+#define unknown 65536
+#define constant 65536
 
 
 // For the Peers
@@ -180,8 +181,8 @@ int main(int argc, char** argv) {
         }
         printf("Peer %d: Join Request sent\n", nodeID);
     }
-    /*--------------------------------------------------------------------------------------------------------------*/
     
+    /*-------------------------------------------- STABILIZE THREAD ------------------------------------------------*/
     if (pthread_mutex_init(&mutex,NULL) != 0) {
     	printf("Mutex init failed\n");
     	exit(1);
@@ -191,6 +192,18 @@ int main(int argc, char** argv) {
     	printf("Thread init failed\n");
     	exit(1);
     }
+
+    /*------------------------------------------ FINGER TABLE INFO -------------------------------------------------*/
+    fingerTable_elem* ft_Elem[16];
+    for (int i = 0; i < 16; i++) {
+    	ft_Elem[i] = NULL;
+    }
+    int fingerTableSocket = -1; // There is no Finger Table yet
+    int tableCounter = -1;		// Peer keeps sending LOOKUP Request till tableCounter = 16  
+    int tableIsComplete = 0;    // Table is not yet finished 
+    int tableIsRequired = 0; 	// Peer hasn't received a Finger Request yet
+
+    /*--------------------------------------------------------------------------------------------------------------*/
 
     while(1){
 
@@ -215,7 +228,7 @@ int main(int argc, char** argv) {
                             fdmax = newSocketFD;
                         }
                     }
-                } else {
+                } else if (i != fingerTableSocket){
                     unsigned char* firstByte = malloc(1);
                     // handle data from a connector
                     // Get the first Byte
@@ -269,7 +282,7 @@ int main(int argc, char** argv) {
                         	nextSocket = createConnection(ipString,portString,NULL);
                         	//create Hash Request
                         	unsigned char* hashRequest = createHashRequest(hashRequestInfo);
-                        	//send Hash Request
+                        	//send Hash RequestnextElem
                         	unsigned int msglen = 7 + hashRequestInfo->keyLen + hashRequestInfo->valueLen;
                             if (send(nextSocket,hashRequest,msglen,0) == -1) {
                                 perror("Error in sending\n");
@@ -281,7 +294,7 @@ int main(int argc, char** argv) {
                                 fdmax = nextSocket;
                             }
                         } 
-                        else {                                                               // unknown Peer
+                        else if (!tableIsComplete) {                                          // unknown Peer, table is not yet completed, do normal LOOKUP
                             printf("Peer %d: I dunno but I'll ask my next pal %d\n", nodeID,nextID);                                          
                             unsigned char* peerRequest;
                             //create LOOKUP Request
@@ -297,6 +310,25 @@ int main(int argc, char** argv) {
                             if (send(nextSocket,peerRequest,11,0) == -1) {
                                 perror("Error in sending\n");
                             }
+                        } else if (tableIsComplete) {										// unknown Peer, table is completed, do finger table LOOKUP
+                        	int index = finger_table_lookup(hashValue,&ft_Elem[0]);
+                        	fingerTable_elem* ft_node = ft_Elem[index];
+                        	unsigned int ID = ft_node->peerID;
+                        	unsigned int IP = ft_node->peerIP;
+                        	unsigned int port = ft_node->peerPort;
+
+                        	unsigned char* peerRequest;
+                        	peerRequest = createPeerRequest(hashKey,nodeID,nodeIP,nodePort,LOOKUP);
+
+                        	char ipString[INET_ADDRSTRLEN];
+                        	inet_ntop(AF_INET, &IP, ipString, sizeof(ipString));
+                        	char portString[20];
+                        	itoa(port,portString);
+                        	unsigned int socket = createConnection(ipString,portString,NULL);
+
+                        	if (send(socket,peerRequest,11,0) == -1) {
+                                perror("Error in sending\n");
+                            }
                         }
 
                     } else if (requestType == LOOKUP) {
@@ -310,7 +342,6 @@ int main(int argc, char** argv) {
                         printf("Peer %d: hashValue is %d\n", nodeID, hashValue);
                         
                         // There won't be the case of thisPeer with LOOKUP
-                        
                         if (checkPeer(nodeID,prevID,nextID,hashValue) == nextPeer) {
                             printf("Peer %d: my next pal %d is responsible for the request\n", nodeID,nextID);
                             unsigned char* hashID = malloc(2);
@@ -327,17 +358,6 @@ int main(int argc, char** argv) {
                             char portString[20];
                             itoa(firstPeerPort,portString);
                             
-                            // Get the next IP
-                            //status = getaddrinfo(argv[8], argv[9], &hints, &servinfo);
-                            //if (status != 0) {
-                            //    printf("getaddrinfo error: %s\n",gai_strerror(status));
-                            //    exit(1);
-                            //}    
-                            //struct sockaddr_in *ipv4 = (struct sockaddr_in*) servinfo->ai_addr;
-                            //nextIP = *(unsigned int*)(&ipv4->sin_addr); //////////// Where magic happen /////////////////
-                            //freeaddrinfo(servinfo);
-                            // Got the next IP
-
                             peerRequest = createPeerRequest(hashID,nextID,nextIP,nextPort,REPLY);
                             // Connect to the first peer
                             firstPeerSocket = createConnection(ipString,portString,NULL);
@@ -345,15 +365,34 @@ int main(int argc, char** argv) {
                             if (send(firstPeerSocket,peerRequest,11,0) == -1) {
                                 perror("Error in sending\n");
                             }  
-                        } else if (checkPeer(nodeID,prevID,nextID,hashValue) == unknownPeer) {
-                            printf("Peer %d: I dunno but I'll ask my next pal %d\n", nodeID,nextID);
-                            //create Connection to the next Peer
+                        
+                        } else if (!tableIsComplete) {
+							if (checkPeer(nodeID,prevID,nextID,hashValue) == unknownPeer) {
+                            	printf("Peer %d: I dunno but I'll ask my next pal %d\n", nodeID,nextID);
+                            	//create Connection to the next Peer
+                        		char ipString[INET_ADDRSTRLEN];
+                        		inet_ntop(AF_INET, &nextIP, ipString, sizeof(ipString));
+                        		char portString[20];
+                        		itoa(nextPort,portString);
+                        		nextSocket = createConnection(ipString,portString,NULL);
+                            	if (send(nextSocket,peerRequest,11,0) == -1) {
+                                	perror("Error in sending\n");
+                            	}
+                        	}
+                        } else if (tableIsComplete) {
+                        	int index = finger_table_lookup(hashValue,&ft_Elem[0]);
+                        	fingerTable_elem* ft_node = ft_Elem[index];
+                        	unsigned int ID = ft_node->peerID;
+                        	unsigned int IP = ft_node->peerIP;
+                        	unsigned int port = ft_node->peerPort;
+
                         	char ipString[INET_ADDRSTRLEN];
-                        	inet_ntop(AF_INET, &nextIP, ipString, sizeof(ipString));
+                        	inet_ntop(AF_INET, &IP, ipString, sizeof(ipString));
                         	char portString[20];
-                        	itoa(nextPort,portString);
-                        	nextSocket = createConnection(ipString,portString,NULL);
-                            if (send(nextSocket,peerRequest,11,0) == -1) {
+                        	itoa(port,portString);
+                        	unsigned int socket = createConnection(ipString,portString,NULL);
+
+                        	if (send(socket,peerRequest,11,0) == -1) {
                                 perror("Error in sending\n");
                             }
                         } 
@@ -380,16 +419,59 @@ int main(int argc, char** argv) {
 
                         unsigned char* hashID = malloc(2);
                         memcpy(hashID,peerRequest+1,2);
+
+                        if (tableIsRequired && !tableIsComplete) {
+                        	unsigned int ft_input = 0;
+                        	memcpy(&ft_input,hashID,2);
+                        	unsigned int index = check_finger_table_input(ft_input,nodeID);
+                        	if (ft_Elem[index] == NULL && index >= 0 && index < 16) {
+                        		ft_Elem[index] = malloc(sizeof(fingerTable_elem));
+                        		fingerTable_elem* node = ft_Elem[index];
+                        		node->start = 0;
+                        		node->peerID = 0;
+                        		node->peerIP = 0;
+                        		node->peerPort = 0;
+                        		memcpy(&(node->start),hashID,2);
+                        		memcpy(&(node->peerID),peerRequest+3,2);
+                        		memcpy(&(node->peerIP),peerRequest+5,4);
+                        		memcpy(&(node->peerPort),peerRequest+9,2);
+                        		printf("Peer %d: Add index %d to table, responsible: Peer %d\n", nodeID, index, node->peerID);
+                        	}
+
+                        	// check if the finger table is complete
+                        	int status = 1;
+                        	for (int j = 0; j < 16; j++) {
+                        		if (ft_Elem[j] == NULL) {
+                        			status = 0;
+                        			break;
+                        		}
+                        	}
+                        	tableIsComplete = status;
+                        	
+                        	// if so, send FACK response
+                        	if (tableIsComplete) {
+                        		unsigned char* fackResponse = calloc(11,1);
+                        		*fackResponse = FACK;
+                        		if (send(fingerTableSocket,fackResponse,11,0) == -1) {
+                            		perror("Error in sending\n");
+                        		}
+                        		close(fingerTableSocket);
+                        		FD_CLR(fingerTableSocket, &master);
+                        	}
+                        }
                         
-                        //connect and send Hash Request to the chosen one
+                        //connect to the chosen one
                         chosenPeerSocket = createConnection(ipString,portString,NULL);
+
                         hash_request_info* hashRequestInfo = findHashRequestInfo(hashRequestInfoList,hashID);
-                        hashRequestInfo->finalSocket = chosenPeerSocket;
-                        free(hashID);
-                        unsigned char* hashRequest = createHashRequest(hashRequestInfo);
-                        unsigned int msglen = 7 + hashRequestInfo->keyLen + hashRequestInfo->valueLen;
-                        if (send(chosenPeerSocket,hashRequest,msglen,0) == -1) {
-                            perror("Error in sending\n");
+                        if (hashRequestInfo != NULL) {
+                        	hashRequestInfo->finalSocket = chosenPeerSocket;
+                        	free(hashID);
+                        	unsigned char* hashRequest = createHashRequest(hashRequestInfo);
+                        	unsigned int msglen = 7 + hashRequestInfo->keyLen + hashRequestInfo->valueLen;
+                        	if (send(chosenPeerSocket,hashRequest,msglen,0) == -1) {
+                        	    perror("Error in sending\n");
+                        	}
                         }
 
                         FD_SET(chosenPeerSocket, &master); // add to master set
@@ -484,11 +566,7 @@ int main(int argc, char** argv) {
                         	char portString[20];
                         	itoa(callerPort,portString);
                         	printf("Peer %d: I'm responsible for the Joining of Peer %d\n", nodeID, callerID);
-                        	//printf("Peer %d: Join Caller ID is %d\n", nodeID, callerID);
-                        	//printf("Peer %d: Join Caller IP is %s\n", nodeID, ipString);
-                        	//printf("Peer %d: Join Caller Port is %d\n", nodeID, callerPort);
                         	unsigned int callerSocket = createConnection(ipString,portString,NULL);
-                        	printf("Peer %d: I'm about to send a Notify, Caller IP is: %s\n", nodeID, ipString);
                         	// Create and send the Notify Response
                         	unsigned char* hashID = calloc(2,1);
                         	unsigned char* notifyResponse = createPeerRequest(hashID,nodeID,nodeIP,nodePort,NOTIFY);
@@ -523,9 +601,25 @@ int main(int argc, char** argv) {
                         close(i);
                         FD_CLR(i, &master);
                     
-                    } else if (requestType == FACK) {
-                       
                     } else if (requestType == FINGER) {
+                    	fingerTableSocket = i;
+                    	char ipString[INET_ADDRSTRLEN];
+                        inet_ntop(AF_INET, &nextIP, ipString, sizeof(ipString));
+                        char portString[20];
+                        itoa(nextPort,portString);
+                        nextSocket = createConnection(ipString,portString,NULL);
+
+                        unsigned int start = (nodeID + 1) % constant;
+                        unsigned char* hashID = malloc(2);
+                        memcpy(hashID,&start,2);
+                        unsigned char* peerRequest = createPeerRequest(hashID,nodeID,nodeIP,nodePort,LOOKUP);
+
+                        if (send(nextSocket,peerRequest,11,0) == -1) {
+                            perror("Error in sending\n");
+                        }
+
+                        tableCounter++;
+                        tableIsRequired = 1;
 
                     } else if (requestType == FINAL) {
                     	hash_request_info* hashRequestInfo;
@@ -542,15 +636,35 @@ int main(int argc, char** argv) {
                         }
                         printf("Peer %d: Final request is sent\n", nodeID);
                         remove_info_from_list(hashRequestInfoList, clientRequestInfo);
-                        //freeInfo(clientRequestInfo);
-                        //freeInfo(hashRequestInfo);
-                        //free(finalResponse);
                         close(clientSocket);
                         FD_CLR(clientSocket, &master);
                         close(i);
                         FD_CLR(i, &master);
                     }
 
+                } else if (i == fingerTableSocket && tableCounter >= 0 && tableCounter < 16) {
+                	if (ft_Elem[tableCounter] != NULL) {
+                    	fingerTable_elem* node = ft_Elem[tableCounter];
+                		unsigned int IP = node->peerIP;
+                		unsigned int port = node->peerPort;
+               	    	char ipString[INET_ADDRSTRLEN];
+                    	inet_ntop(AF_INET, &IP, ipString, sizeof(ipString));
+                    	char portString[20];
+                    	itoa(port,portString);
+                    	int ft_socket;
+                    	ft_socket = createConnection(ipString,portString,NULL);
+
+                    	unsigned int start = (nodeID + exponential_of_two(tableCounter + 1)) % constant;
+                    	unsigned char* hashID = malloc(2);
+                    	memcpy(hashID,&start,2);
+                    	unsigned char* peerRequest = createPeerRequest(hashID,nodeID,nodeIP,nodePort,LOOKUP);
+
+                    	if (send(ft_socket,peerRequest,11,0) == -1) {
+                        	perror("Error in sending\n");
+                    	}
+
+                    	tableCounter++;            		
+                	}
                 }
             }
         }        

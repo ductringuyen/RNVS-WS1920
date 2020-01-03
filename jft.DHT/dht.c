@@ -31,15 +31,19 @@
 #define thisPeer 1
 #define nextPeer 2
 
-#define unknown 101
+#define unknown 65536
+#define constant 65536
 
 unsigned int ringHashing(unsigned char* key) {
-  unsigned int hashValue = 0;
-  for (unsigned int i = 0; i < 2; i++) {
-    hashValue += (unsigned int)(key[i]%51);
-  }
-  return hashValue;
+  return (key[0]<<8) + (key[1]);
 };
+
+/*unsigned char* hashValueEncoding(unsigned int hashValue) {
+  unsigned int value = hashValue;
+  unsigned char* hashID = calloc(2,1);
+  memcpy(hashID,hashValue,2);  
+  return hashID;
+}*/
 
 unsigned int checkPeer(unsigned int nodeID, unsigned int prevID, unsigned int nextID, unsigned int hashValue) {
 	if ((hashValue <= nodeID && hashValue > prevID) || (prevID > nodeID && hashValue > prevID) || (prevID > nodeID && hashValue < nodeID) || (nextID == unknown)) {
@@ -322,4 +326,38 @@ hash_request_info* getClientRequestInfo(hash_request_info_list* list, hash_reque
     }
 
     return NULL;   
+}
+
+unsigned int exponential_of_two(unsigned int n) {
+  if (n == 0) return 1;
+  unsigned int result = 1;
+  for (unsigned int i = 0; i < n; i++) {
+    result = result*2;
+  }
+  return result; 
+}
+
+unsigned int check_finger_table_input(unsigned int ft_input, unsigned int nodeID) {
+  for (int i = 0; i < 16; i++) {
+    if ((nodeID + exponential_of_two(i)) % constant == ft_input) return i;
+  }
+  return 16; 
+}
+
+int finger_table_lookup(unsigned int hashValue, fingerTable_elem **ft_Elem) {
+  int index;
+  int nextIndex;
+  int elemID;
+  int nextElemID;
+  for (int i = 0; i < 16; i++) {
+    index = i;
+    if (index == 15) {
+      nextIndex = 0;
+    } else {
+      nextIndex = i + 1;
+    }
+    elemID = ft_Elem[index]->peerID;
+    nextElemID = ft_Elem[nextIndex]->peerID;
+    if (hashValue > elemID && (hashValue <= nextElemID || nextElemID < elemID)) return index;
+  }
 }

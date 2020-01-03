@@ -72,7 +72,7 @@ void* stabilizing(void* arg) {
             itoa(nextPort,portString);
             unsigned int socket = createConnection(ipString,portString,NULL);                            
             //send STABILIZE Request
-            printf("Peer %d Stabilizing to Peer %d\n", nodeID, nextID);
+            //printf("Peer %d Stabilizing to Peer %d\n", nodeID, nextID);
             pthread_mutex_unlock(&mutex);
             if (send(socket,stabilizeRequest,11,0) == -1) {
                 perror("Error in sending\n");
@@ -148,7 +148,7 @@ int main(int argc, char** argv) {
     struct sockaddr_in *ipv4 = (struct sockaddr_in*) servinfo->ai_addr;
     nodeIP = *(unsigned int*)(&ipv4->sin_addr); //////////// Where magic happen /////////////////
     freeaddrinfo(servinfo);
-    printf("Peer %d: Binding to the listener\n", nodeID);
+    //printf("Peer %d: Binding to the listener\n", nodeID);
 
     /*---------------------------------------------------------------------------------------------------------------*/
 
@@ -170,16 +170,14 @@ int main(int argc, char** argv) {
 
     /*-------------------------------------------------- JOINING ---------------------------------------------------*/
     if (argc == 6) {
-    	printf("Peer %d: I want to join\n", nodeID);
+    	//printf("Peer %d: I want to join\n", nodeID);
     	unsigned int friendSocket = createConnection(argv[4],argv[5],&friendIP);
-    	//printf("Peer %d: got connected\n", nodeID);
     	unsigned char* hashID = calloc(2,1);
     	unsigned char* joinRequest = createPeerRequest(hashID,nodeID,nodeIP,nodePort,JOIN);
-    	//printf("Peer %d: Join Request created\n", nodeID);
     	if (send(friendSocket,joinRequest,11,0) == -1) {
             perror("Error in sending\n");
         }
-        printf("Peer %d: Join Request sent\n", nodeID);
+        //printf("Peer %d: Join Request sent\n", nodeID);
     }
     
     /*-------------------------------------------- STABILIZE THREAD ------------------------------------------------*/
@@ -311,7 +309,8 @@ int main(int argc, char** argv) {
                                 perror("Error in sending\n");
                             }
                         } else if (tableIsComplete) {										// unknown Peer, table is completed, do finger table LOOKUP
-                        	int index = finger_table_lookup(hashValue,&ft_Elem[0]);
+                        	printf("Peer %d: Do finger table LOOKUP\n", nodeID);
+                        	int index = finger_table_lookup(hashValue,&ft_Elem[0],16);
                         	fingerTable_elem* ft_node = ft_Elem[index];
                         	unsigned int ID = ft_node->peerID;
                         	unsigned int IP = ft_node->peerIP;
@@ -380,7 +379,8 @@ int main(int argc, char** argv) {
                             	}
                         	}
                         } else if (tableIsComplete) {
-                        	int index = finger_table_lookup(hashValue,&ft_Elem[0]);
+                        	printf("Peer %d: Do finger table LOOKUP\n", nodeID);
+                        	int index = finger_table_lookup(hashValue,&ft_Elem[0],16);
                         	fingerTable_elem* ft_node = ft_Elem[index];
                         	unsigned int ID = ft_node->peerID;
                         	unsigned int IP = ft_node->peerIP;
@@ -409,20 +409,20 @@ int main(int argc, char** argv) {
                         memcpy(&chosenPeerIP,peerRequest+5,4);
                         char ipString[INET_ADDRSTRLEN];
                         inet_ntop(AF_INET, &chosenPeerIP, ipString, sizeof(ipString));
-                        printf("Peer %d: IP of the chosen One: %s\n",nodeID,ipString);
+                        //printf("Peer %d: IP of the chosen One: %s\n",nodeID,ipString);
 
                         unsigned int chosenPeerPort;
                         rv_memcpy(&chosenPeerPort,peerRequest+9,2);
                         char portString[20];
                         itoa(chosenPeerPort,portString);
-                        printf("Peer %d: Port of the chosen One: %s\n",nodeID,portString);
+                        //printf("Peer %d: Port of the chosen One: %s\n",nodeID,portString);
 
                         unsigned char* hashID = malloc(2);
                         memcpy(hashID,peerRequest+1,2);
 
                         if (tableIsRequired && !tableIsComplete) {
                         	unsigned int ft_input = 0;
-                        	memcpy(&ft_input,hashID,2);
+                        	rv_memcpy(&ft_input,hashID,2);
                         	unsigned int index = check_finger_table_input(ft_input,nodeID);
                         	if (ft_Elem[index] == NULL && index >= 0 && index < 16) {
                         		ft_Elem[index] = malloc(sizeof(fingerTable_elem));
@@ -432,9 +432,9 @@ int main(int argc, char** argv) {
                         		node->peerIP = 0;
                         		node->peerPort = 0;
                         		memcpy(&(node->start),hashID,2);
-                        		memcpy(&(node->peerID),peerRequest+3,2);
+                        		rv_memcpy(&(node->peerID),peerRequest+3,2);
                         		memcpy(&(node->peerIP),peerRequest+5,4);
-                        		memcpy(&(node->peerPort),peerRequest+9,2);
+                        		rv_memcpy(&(node->peerPort),peerRequest+9,2);
                         		printf("Peer %d: Add index %d to table, responsible: Peer %d\n", nodeID, index, node->peerID);
                         	}
 
@@ -491,7 +491,7 @@ int main(int argc, char** argv) {
                         unsigned int callerPort = 0;
 
                         rv_memcpy(&callerID,peerRequest+3,2);
-                        printf("Peer %d: received a STABILIZE Request from Peer %d\n", nodeID, callerID);
+                        //printf("Peer %d: received a STABILIZE Request from Peer %d\n", nodeID, callerID);
 
                         memcpy(&callerIP,peerRequest+5,4);
                         char ipString[INET_ADDRSTRLEN];
@@ -507,7 +507,7 @@ int main(int argc, char** argv) {
                         	prevID = callerID;
                         	prevIP = callerIP;
                         	prevPort = callerPort;
-                        	printf("Peer %d: my prev is %d\n", nodeID, prevID);
+                        	//printf("Peer %d: my prev is %d\n", nodeID, prevID);
                         }
 
                         unsigned char* hashID = malloc(2);
@@ -528,7 +528,7 @@ int main(int argc, char** argv) {
 
                         unsigned int notifiedID  = 0;
                         rv_memcpy(&notifiedID,peerRequest+3,2);
-                        printf("Peer %d: Notified ID is %d\n", nodeID, notifiedID);
+                        //printf("Peer %d: Notified ID is %d\n", nodeID, notifiedID);
 
                         if (notifiedID == nodeID) {
                            	continue;
@@ -546,7 +546,7 @@ int main(int argc, char** argv) {
                         FD_CLR(i, &master);
                     
                     } else if (requestType == JOIN) {
-                    	printf("Peer %d: received a Join Request\n", nodeID);
+                    	//printf("Peer %d: received a Join Request\n", nodeID);
                         unsigned char* peerRequest;
                         peerRequest = getPeerRequest(i,firstByte);
 
@@ -565,7 +565,7 @@ int main(int argc, char** argv) {
                         	inet_ntop(AF_INET, &callerIP, ipString, sizeof(ipString));
                         	char portString[20];
                         	itoa(callerPort,portString);
-                        	printf("Peer %d: I'm responsible for the Joining of Peer %d\n", nodeID, callerID);
+                        	//printf("Peer %d: I'm responsible for the Joining of Peer %d\n", nodeID, callerID);
                         	unsigned int callerSocket = createConnection(ipString,portString,NULL);
                         	// Create and send the Notify Response
                         	unsigned char* hashID = calloc(2,1);
@@ -582,11 +582,10 @@ int main(int argc, char** argv) {
                         		nextIP = callerIP;
                         		nextPort = callerPort;
                         	}
-                        	printf("Peer %d: my next and my prev are %d and %d\n", nodeID, nextID,prevID);
-                        	
+                        	                        	
                         } else if (checkJoinPeer(nodeID, prevID, nextID, callerID) == unknownPeer) {
                         	// Connect to the next Peer
-                        	printf("Peer %d on Joining: I dunno but I'll ask my next Peer %d\n", nodeID, nextID);
+                        	//printf("Peer %d on Joining: I dunno but I'll ask my next Peer %d\n", nodeID, nextID);
                         	char ipString[INET_ADDRSTRLEN];
                         	inet_ntop(AF_INET, &nextIP, ipString, sizeof(ipString));
                         	char portString[20];
@@ -603,24 +602,22 @@ int main(int argc, char** argv) {
                     
                     } else if (requestType == FINGER) {
                     	fingerTableSocket = i;
-                    	char ipString[INET_ADDRSTRLEN];
-                        inet_ntop(AF_INET, &nextIP, ipString, sizeof(ipString));
-                        char portString[20];
-                        itoa(nextPort,portString);
-                        nextSocket = createConnection(ipString,portString,NULL);
+                    	tableIsRequired = 1;
+                        tableIsComplete = 0;
+    					for (int j = 0; j < 16; j++) {
+    						ft_Elem[j] = NULL;
+    					}
+    					unsigned int start = (nodeID + 1) % constant;
 
-                        unsigned int start = (nodeID + 1) % constant;
-                        unsigned char* hashID = malloc(2);
-                        memcpy(hashID,&start,2);
-                        unsigned char* peerRequest = createPeerRequest(hashID,nodeID,nodeIP,nodePort,LOOKUP);
-
-                        if (send(nextSocket,peerRequest,11,0) == -1) {
-                            perror("Error in sending\n");
-                        }
-
+    					ft_Elem[0] = malloc(sizeof(fingerTable_elem));
+    					ft_Elem[0]->start = start;
+    					ft_Elem[0]->peerID = nextID;
+    					ft_Elem[0]->peerIP = nextIP;
+    					ft_Elem[0]->peerPort = nextPort;
+    					printf("Peer %d: Add index 0 to table, responsible: Peer %d\n", nodeID, ft_Elem[0]->peerID);
+    					
                         tableCounter++;
-                        tableIsRequired = 1;
-
+                    
                     } else if (requestType == FINAL) {
                     	hash_request_info* hashRequestInfo;
                         printf("Peer %d: received a FINAL Request\n", nodeID);
@@ -642,28 +639,41 @@ int main(int argc, char** argv) {
                         FD_CLR(i, &master);
                     }
 
-                } else if (i == fingerTableSocket && tableCounter >= 0 && tableCounter < 16) {
+                } else if (i == fingerTableSocket && tableCounter >= 0) {
                 	if (ft_Elem[tableCounter] != NULL) {
-                    	fingerTable_elem* node = ft_Elem[tableCounter];
-                		unsigned int IP = node->peerIP;
-                		unsigned int port = node->peerPort;
-               	    	char ipString[INET_ADDRSTRLEN];
-                    	inet_ntop(AF_INET, &IP, ipString, sizeof(ipString));
-                    	char portString[20];
-                    	itoa(port,portString);
-                    	int ft_socket;
-                    	ft_socket = createConnection(ipString,portString,NULL);
-
+                		printf("Peer %d: Building Finger Table for index %d\n",nodeID,tableCounter+1);
                     	unsigned int start = (nodeID + exponential_of_two(tableCounter + 1)) % constant;
-                    	unsigned char* hashID = malloc(2);
-                    	memcpy(hashID,&start,2);
-                    	unsigned char* peerRequest = createPeerRequest(hashID,nodeID,nodeIP,nodePort,LOOKUP);
+                    	if (checkPeer(nodeID,prevID,nextID,start) == nextPeer) {
+                    		ft_Elem[tableCounter+1] = malloc(sizeof(fingerTable_elem));
+    						ft_Elem[tableCounter+1]->start = start;
+    						ft_Elem[tableCounter+1]->peerID = nextID;
+    						ft_Elem[tableCounter+1]->peerIP = nextIP;
+    						ft_Elem[tableCounter+1]->peerPort = nextPort;
+    						printf("Peer %d: Add index %d to table, responsible: Peer %d\n", nodeID, tableCounter+1, ft_Elem[tableCounter+1]->peerID);
+                    	} else {
+                    		int index = finger_table_lookup(start,&ft_Elem[0],tableCounter+1);
+                    		fingerTable_elem* node = ft_Elem[index];
+                    		printf("Peer %d: Searching -> Index %d - Peer %d\n", nodeID, index, ft_Elem[index]->peerID);
+                    		unsigned int ID = node->peerID;
+            				unsigned int IP = node->peerIP;
+                			unsigned int port = node->peerPort;
+               	    		char ipString[INET_ADDRSTRLEN];
+                    		inet_ntop(AF_INET, &IP, ipString, sizeof(ipString));
+                    		char portString[20];
+                    		itoa(port,portString);
+                    		int ft_socket;
+                    		ft_socket = createConnection(ipString,portString,NULL);
 
-                    	if (send(ft_socket,peerRequest,11,0) == -1) {
-                        	perror("Error in sending\n");
+                    	    unsigned char* hashID = malloc(2);
+                    		rv_memcpy(hashID,&start,2);
+                    		printf("Peer %d: Send hashID %d to Peer %d\n", nodeID, start, ID);
+                    		unsigned char* peerRequest = createPeerRequest(hashID,nodeID,nodeIP,nodePort,LOOKUP);
+
+                    		if (send(ft_socket,peerRequest,11,0) == -1) {
+                        		perror("Error in sending\n");
+                    		}
                     	}
-
-                    	tableCounter++;            		
+                       	tableCounter++;            		
                 	}
                 }
             }

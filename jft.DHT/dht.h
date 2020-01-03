@@ -60,4 +60,4 @@ unsigned int exponential_of_two(unsigned int n);
 
 unsigned int check_finger_table_input(unsigned int ft_input, unsigned int nodeID);
 
-int finger_table_lookup(unsigned int hashValue, fingerTable_elem **ft_Elem);
+int finger_table_lookup(unsigned int hashValue, fingerTable_elem **ft_Elem, int size);

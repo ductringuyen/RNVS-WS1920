@@ -61,7 +61,7 @@ unsigned int checkJoinPeer(unsigned int nodeID, unsigned int prevID, unsigned in
   if (nextID == prevID && nodeID < nextID && callerID > nextID) return thisPeer;
   // 3 or more Peers in Ring           
   if (nodeID > callerID && prevID < callerID) return thisPeer;
-  if (nodeID < callerID && prevID > nodeID && nextID != prevID) return thisPeer;
+  if (nodeID < callerID && prevID > nodeID && nextID != prevID && callerID > prevID) return thisPeer;
   return unknownPeer;
 }
 
@@ -156,14 +156,14 @@ unsigned char* peerHashing(hashable** hTab, hash_request_info* hashRequestInfo, 
   memcpy(value,hashRequestInfo->value,valueLen);
 
 	if (opt == SET) {
-            printf("SET\n");
+            //printf("SET\n");
             resLen = 7;
            	response = calloc(resLen,1);
             response[0] = ACK + SET;			     // set Ack bit of the response
            	set(hTab, key, value, keyLen, valueLen);
         } 
     else if (opt == GET) {
-        printf("GET\n");
+        //printf("GET\n");
         hashable *hashElem = get(hTab, key, keyLen);
        	if (hashElem == NULL) {
             resLen = 7;
@@ -181,7 +181,7 @@ unsigned char* peerHashing(hashable** hTab, hash_request_info* hashRequestInfo, 
            }
         }
     else if (opt == DEL) {
-           printf("DELETE\n"); 
+           //printf("DELETE\n"); 
            resLen = 7;
            response = (unsigned char*) calloc(resLen,1);
            response[0] = ACK + DEL;			// set Ack bit of the response
@@ -344,20 +344,27 @@ unsigned int check_finger_table_input(unsigned int ft_input, unsigned int nodeID
   return 16; 
 }
 
-int finger_table_lookup(unsigned int hashValue, fingerTable_elem **ft_Elem) {
+int finger_table_lookup(unsigned int hashValue, fingerTable_elem **ft_Elem, int size) {
   int index;
-  int nextIndex;
-  int elemID;
-  int nextElemID;
-  for (int i = 0; i < 16; i++) {
-    index = i;
-    if (index == 15) {
-      nextIndex = 0;
-    } else {
-      nextIndex = i + 1;
+  int max = ft_Elem[0]->peerID;
+  int min = ft_Elem[0]->peerID;
+  for (int i = 0; i < size; i++) {
+    if (ft_Elem[i]->peerID >= max){ 
+      max = ft_Elem[i]->peerID;
+      index = i;
     }
-    elemID = ft_Elem[index]->peerID;
-    nextElemID = ft_Elem[nextIndex]->peerID;
-    if (hashValue > elemID && (hashValue <= nextElemID || nextElemID < elemID)) return index;
+    if (ft_Elem[i]->peerID <= min) {
+      min = ft_Elem[i]->peerID;
+    }  
   }
+  if (hashValue < min || hashValue > max) return index;
+
+  for (int i = 0; i < size; i++) {
+    if (hashValue > ft_Elem[i]->peerID) {
+      index = i;
+    } else {
+      break;
+    }
+  }
+  return index;
 }

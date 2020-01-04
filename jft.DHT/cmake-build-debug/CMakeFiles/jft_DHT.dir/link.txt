@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/jft_DHT.dir/dht.c.o CMakeFiles/jft_DHT.dir/hashing.c.o CMakeFiles/jft_DHT.dir/peer.c.o  -o jft_DHT 

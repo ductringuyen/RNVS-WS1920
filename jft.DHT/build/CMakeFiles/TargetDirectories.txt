@@ -1,0 +1,3 @@
+/home/viet/viet.Programmierung/C/RNVS-WS1920/jft.DHT/build/CMakeFiles/rebuild_cache.dir
+/home/viet/viet.Programmierung/C/RNVS-WS1920/jft.DHT/build/CMakeFiles/peer.dir
+/home/viet/viet.Programmierung/C/RNVS-WS1920/jft.DHT/build/CMakeFiles/edit_cache.dir

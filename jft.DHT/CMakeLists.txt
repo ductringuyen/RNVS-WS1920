@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.10.2)
+project(Block5 C)
+find_package( Threads )
+set(CMAKE_C_COMPILER gcc)
+add_executable(peer peer.c uthash.h hashing.c hashing.h dht.c dht.h)
+target_link_libraries( peer ${CMAKE_THREAD_LIBS_INIT} )

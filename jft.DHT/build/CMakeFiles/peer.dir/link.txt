@@ -1,0 +1,1 @@
+gcc    CMakeFiles/peer.dir/peer.c.o CMakeFiles/peer.dir/hashing.c.o CMakeFiles/peer.dir/dht.c.o  -o peer -lpthread 

@@ -241,7 +241,7 @@ int main(int argc, char** argv) {
                     //printf("Peer %d got Something: decode the first Byte %d\n", nodeID, requestType);                                               
                                         
                     if (requestType == HASH) {
-                        printf("Peer %d: received a Hash Request\n", nodeID);
+                        //printf("Peer %d: received a Hash Request\n", nodeID);
                         hash_request_info* hashRequestInfo;
                         hashRequestInfo = getHashRequestInfo(i,firstByte);
                         put_in_the_list(hashRequestInfoList, hashRequestInfo);
@@ -256,9 +256,9 @@ int main(int argc, char** argv) {
                         }
 
                         unsigned int hashValue = ringHashing(hashKey);
-                        printf("Peer %d: hashValue is %d\n", nodeID, hashValue);
+                        //printf("Peer %d: hashValue is %d\n", nodeID, hashValue);
                         if (checkPeer(nodeID,prevID,nextID,hashValue) == thisPeer) {        // This peer is responsible for this Request
-                            printf("Peer %d: I'm responsible for the request\n", nodeID);
+                            //printf("Peer %d: I'm responsible for the request\n", nodeID);
                             unsigned char* response;
                             unsigned int responseLen; 
                             response = peerHashing(&hTab,hashRequestInfo,&responseLen);
@@ -267,12 +267,12 @@ int main(int argc, char** argv) {
                             }
                             remove_info_from_list(hashRequestInfoList, hashRequestInfo);
                             freeInfo(hashRequestInfo);
-                            printf("peer %d: Hash request sent\n", nodeID);
+                            //printf("peer %d: Hash request sent\n", nodeID);
                             close(i);
                             FD_CLR(i, &master); 
                         }
                         else if (checkPeer(nodeID,prevID,nextID,hashValue) == nextPeer) {   // Next peer is responsible for this Request
-                            printf("Peer %d: my next pal %d is responsible for the request\n", nodeID,nextID);
+                            //printf("Peer %d: my next pal %d is responsible for the request\n", nodeID,nextID);
                             //create Connection to the next Peer
                         	char ipString[INET_ADDRSTRLEN];
                         	inet_ntop(AF_INET, &nextIP, ipString, sizeof(ipString));
@@ -294,10 +294,10 @@ int main(int argc, char** argv) {
                             }
                         } 
                         else if (!tableIsComplete) {                                          // unknown Peer, table is not yet completed, do normal LOOKUP
-                            printf("Peer %d: I dunno but I'll ask my next pal %d\n", nodeID,nextID);                                          
+                            //printf("Peer %d: I dunno but I'll ask my next pal %d\n", nodeID,nextID);                                          
                             unsigned char* peerRequest;
                             //create LOOKUP Request
-                            printf("Peer %d: my IP is %d\n", nodeID, nodeIP);
+                            //printf("Peer %d: my IP is %d\n", nodeID, nodeIP);
                             peerRequest = createPeerRequest(hashKey,nodeID,nodeIP,nodePort,LOOKUP);
                             //create Connection to the next Peer
                         	char ipString[INET_ADDRSTRLEN];
@@ -310,7 +310,7 @@ int main(int argc, char** argv) {
                                 perror("Error in sending\n");
                             }
                         } else if (tableIsComplete) {										// unknown Peer, table is completed, do finger table LOOKUP
-                        	printf("Peer %d: Do finger table LOOKUP\n", nodeID);
+                        	//printf("Peer %d: Do finger table LOOKUP\n", nodeID);
                         	int index = finger_table_lookup(hashValue,&ft_Elem[0],16);
                         	fingerTable_elem* ft_node = ft_Elem[index];
                         	unsigned int ID = ft_node->peerID;
@@ -333,17 +333,17 @@ int main(int argc, char** argv) {
 
                     } else if (requestType == LOOKUP) {
                         //get full request
-                        printf("Peer %d: received a LOOKUP Request\n", nodeID);
+                        //printf("Peer %d: received a LOOKUP Request\n", nodeID);
                         unsigned char* peerRequest;
                         peerRequest = getPeerRequest(i,firstByte);
                         unsigned char* hashID = malloc(2);
                         memcpy(hashID,peerRequest+1,2);
                         unsigned int hashValue = ringHashing(hashID);
-                        printf("Peer %d: hashValue is %d\n", nodeID, hashValue);
+                        //printf("Peer %d: hashValue is %d\n", nodeID, hashValue);
                         
                         // There won't be the case of thisPeer with LOOKUP
                         if (checkPeer(nodeID,prevID,nextID,hashValue) == nextPeer) {
-                            printf("Peer %d: my next pal %d is responsible for the request\n", nodeID,nextID);
+                            //printf("Peer %d: my next pal %d is responsible for the request\n", nodeID,nextID);
                             unsigned char* hashID = malloc(2);
                             memcpy(hashID,peerRequest+1,2);
 
@@ -368,7 +368,7 @@ int main(int argc, char** argv) {
                         
                         } else if (!tableIsComplete) {
 							if (checkPeer(nodeID,prevID,nextID,hashValue) == unknownPeer) {
-                            	printf("Peer %d: I dunno but I'll ask my next pal %d\n", nodeID,nextID);
+                            	//printf("Peer %d: I dunno but I'll ask my next pal %d\n", nodeID,nextID);
                             	//create Connection to the next Peer
                         		char ipString[INET_ADDRSTRLEN];
                         		inet_ntop(AF_INET, &nextIP, ipString, sizeof(ipString));
@@ -380,7 +380,7 @@ int main(int argc, char** argv) {
                             	}
                         	}
                         } else if (tableIsComplete) {
-                        	printf("Peer %d: Do finger table LOOKUP\n", nodeID);
+                        	//printf("Peer %d: Do finger table LOOKUP\n", nodeID);
                         	int index = finger_table_lookup(hashValue,&ft_Elem[0],16);
                         	fingerTable_elem* ft_node = ft_Elem[index];
                         	unsigned int ID = ft_node->peerID;
@@ -402,7 +402,7 @@ int main(int argc, char** argv) {
 
                     } else if (requestType == REPLY) {
                         //get full request
-                        printf("Peer %d: received a REPLY Request\n", nodeID);
+                        //printf("Peer %d: received a REPLY Request\n", nodeID);
                         unsigned char* peerRequest;
                         peerRequest = getPeerRequest(i,firstByte);
 
@@ -436,7 +436,7 @@ int main(int argc, char** argv) {
                         		rv_memcpy(&(node->peerID),peerRequest+3,2);
                         		memcpy(&(node->peerIP),peerRequest+5,4);
                         		rv_memcpy(&(node->peerPort),peerRequest+9,2);
-                        		printf("Peer %d: Add index %d to table, responsible: Peer %d\n", nodeID, index, node->peerID);
+                        		//printf("Peer %d: Add index %d to table, responsible: Peer %d\n", nodeID, index, node->peerID);
                         	}
 
                         	// check if the finger table is complete
@@ -453,11 +453,15 @@ int main(int argc, char** argv) {
                         	if (tableIsComplete) {
                         		unsigned char* fackResponse = calloc(11,1);
                         		*fackResponse = FACK;
-                        		if (send(fingerTableSocket,fackResponse,11,0) == -1) {
-                            		perror("Error in sending\n");
+                        		int sendNb = send(fingerTableSocket,fackResponse,11,0);
+                        		if (sendNb != 11) {
+                                    printf("FACK: Error in sending send = %d\n",sendNb);
                         		}
-                        		close(fingerTableSocket);
+                                //printf("Peer %d: FACK is sent %d bytes\n", nodeID, sendNb);
+                        		sleep(0.001);
                         		FD_CLR(fingerTableSocket, &master);
+                                close(fingerTableSocket);
+                                fingerTableSocket = -1;
                         	}
                         }
                         
@@ -617,24 +621,24 @@ int main(int argc, char** argv) {
     					ft_Elem[0]->peerID = nextID;
     					ft_Elem[0]->peerIP = nextIP;
     					ft_Elem[0]->peerPort = nextPort;
-    					printf("Peer %d: Add index 0 to table, responsible: Peer %d\n", nodeID, ft_Elem[0]->peerID);
+    					//printf("Peer %d: Add index 0 to table, responsible: Peer %d\n", nodeID, ft_Elem[0]->peerID);
     					
                         tableCounter++;
                     
                     } else if (requestType == FINAL) {
                     	hash_request_info* hashRequestInfo;
-                        printf("Peer %d: received a FINAL Request\n", nodeID);
+                        //printf("Peer %d: received a FINAL Request\n", nodeID);
                         hashRequestInfo = getHashRequestInfo(i,firstByte);
                         unsigned char* finalResponse = createHashRequest(hashRequestInfo);
                         hash_request_info* clientRequestInfo;
                         clientRequestInfo = getClientRequestInfo(hashRequestInfoList, hashRequestInfo, i);
                         clientSocket = clientRequestInfo->callerSocket;
-                        printf("Peer %d: Got the final Response\n",nodeID);
+                        //printf("Peer %d: Got the final Response\n",nodeID);
                         unsigned int msglen = hashRequestInfo->keyLen + hashRequestInfo->valueLen +7;
                         if (send(clientSocket,finalResponse,msglen,0) == -1) {
                             perror("Error in sending\n");
                         }
-                        printf("Peer %d: Final request is sent\n", nodeID);
+                        //printf("Peer %d: Final request is sent\n", nodeID);
                         remove_info_from_list(hashRequestInfoList, clientRequestInfo);
                         close(clientSocket);
                         FD_CLR(clientSocket, &master);
@@ -644,7 +648,7 @@ int main(int argc, char** argv) {
 
                 } else if (i == fingerTableSocket && tableCounter >= 0 && tableCounter < 15) {
                 	if (ft_Elem[tableCounter] != NULL) {
-                		printf("Peer %d: Building Finger Table for index %d\n",nodeID,tableCounter+1);
+                		//printf("Peer %d: Building Finger Table for index %d\n",nodeID,tableCounter+1);
                     	unsigned int start = (nodeID + exponential_of_two(tableCounter + 1)) % constant;
                     	if (checkPeer(nodeID,prevID,nextID,start) == nextPeer) {
                     		ft_Elem[tableCounter+1] = malloc(sizeof(fingerTable_elem));
@@ -652,23 +656,27 @@ int main(int argc, char** argv) {
     						ft_Elem[tableCounter+1]->peerID = nextID;
     						ft_Elem[tableCounter+1]->peerIP = nextIP;
     						ft_Elem[tableCounter+1]->peerPort = nextPort;
-    						printf("Peer %d: Add index %d to table, responsible: Peer %d\n", nodeID, tableCounter+1, ft_Elem[tableCounter+1]->peerID);
+    						//printf("Peer %d: Add index %d to table, responsible: Peer %d\n", nodeID, tableCounter+1, ft_Elem[tableCounter+1]->peerID);
     						if (tableCounter == 14) {
     							tableCounter++;
     							tableIsComplete = 1;
     							unsigned char* fackResponse = calloc(11,1);
                         		*fackResponse = FACK;
-                        		if (send(i,fackResponse,11,0) == -1) {
-                            		perror("Error in sending\n");
-                        		}
+                                int sendNb = send(fingerTableSocket,fackResponse,11,0);
+                                if (sendNb != 11) {
+                                    printf("FACK: Error in sending send = %d\n",sendNb);
+                                }
+                        		//printf("Peer %d: FACK is sent %d bytes\n", nodeID, sendNb);
+                                FD_CLR(i, &master);
+                                sleep(0.001);
+                                fingerTableSocket = -1;
                         		close(i);
-                        		FD_CLR(i, &master);
                         		continue;
     						}
                     	} else {
                     		int index = finger_table_lookup(start,&ft_Elem[0],tableCounter+1);
                     		fingerTable_elem* node = ft_Elem[index];
-                    		printf("Peer %d: Searching -> Index %d - Peer %d\n", nodeID, index, ft_Elem[index]->peerID);
+                    		//printf("Peer %d: Searching -> Index %d - Peer %d\n", nodeID, index, ft_Elem[index]->peerID);
                     		unsigned int ID = node->peerID;
             				unsigned int IP = node->peerIP;
                 			unsigned int port = node->peerPort;
@@ -681,7 +689,7 @@ int main(int argc, char** argv) {
 
                     	    unsigned char* hashID = malloc(2);
                     		rv_memcpy(hashID,&start,2);
-                    		printf("Peer %d: Send hashID %d to Peer %d\n", nodeID, start, ID);
+                    		//printf("Peer %d: Send hashID %d to Peer %d\n", nodeID, start, ID);
                     		unsigned char* peerRequest = createPeerRequest(hashID,nodeID,nodeIP,nodePort,LOOKUP);
 
                     		if (send(ft_socket,peerRequest,11,0) == -1) {

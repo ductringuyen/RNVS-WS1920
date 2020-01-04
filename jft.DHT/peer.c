@@ -55,6 +55,7 @@ unsigned int friendPort;
 
 unsigned int clientSocket;  // Socket to the sender of the Hash Request
 pthread_mutex_t mutex; 
+int closeFTsocket = 0;
 
 // STABILIZE thread
 void* stabilizing(void* arg) {
@@ -604,6 +605,8 @@ int main(int argc, char** argv) {
                     	fingerTableSocket = i;
                     	tableIsRequired = 1;
                         tableIsComplete = 0;
+                        tableCounter = -1;
+
     					for (int j = 0; j < 16; j++) {
     						ft_Elem[j] = NULL;
     					}
@@ -639,7 +642,7 @@ int main(int argc, char** argv) {
                         FD_CLR(i, &master);
                     }
 
-                } else if (i == fingerTableSocket && tableCounter >= 0) {
+                } else if (i == fingerTableSocket && tableCounter >= 0 && tableCounter < 15) {
                 	if (ft_Elem[tableCounter] != NULL) {
                 		printf("Peer %d: Building Finger Table for index %d\n",nodeID,tableCounter+1);
                     	unsigned int start = (nodeID + exponential_of_two(tableCounter + 1)) % constant;
@@ -650,6 +653,18 @@ int main(int argc, char** argv) {
     						ft_Elem[tableCounter+1]->peerIP = nextIP;
     						ft_Elem[tableCounter+1]->peerPort = nextPort;
     						printf("Peer %d: Add index %d to table, responsible: Peer %d\n", nodeID, tableCounter+1, ft_Elem[tableCounter+1]->peerID);
+    						if (tableCounter == 14) {
+    							tableCounter++;
+    							tableIsComplete = 1;
+    							unsigned char* fackResponse = calloc(11,1);
+                        		*fackResponse = FACK;
+                        		if (send(i,fackResponse,11,0) == -1) {
+                            		perror("Error in sending\n");
+                        		}
+                        		close(i);
+                        		FD_CLR(i, &master);
+                        		continue;
+    						}
                     	} else {
                     		int index = finger_table_lookup(start,&ft_Elem[0],tableCounter+1);
                     		fingerTable_elem* node = ft_Elem[index];

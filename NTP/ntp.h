@@ -1,11 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <arpa/inet.h>
-#include <time.h>
+void rv_memcpy(void* dst, void* src, unsigned int len);
 
 int bindToPort(char* portString);
+
+double getTimeStamp(struct timespec clock);
+
+unsigned char* createNTPRequest(double t1_unix);
+
+void analizeTheResponse(unsigned char* response, double* T2, double* T3, float* rootDispersion);

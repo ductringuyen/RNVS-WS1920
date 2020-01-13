@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/mnt/d/RNVS1920/Block6/ntp.c
+/home/viet/viet.Programmierung/C/RNVS-WS1920/NTP/Block6/ntp.c
 stdio.h
 -
 stdlib.h
@@ -26,7 +26,31 @@ arpa/inet.h
 time.h
 -
 ntp.h
-/mnt/d/RNVS1920/Block6/ntp.h
+/home/viet/viet.Programmierung/C/RNVS-WS1920/NTP/Block6/ntp.h
 
-/mnt/d/RNVS1920/Block6/ntp.h
+/home/viet/viet.Programmierung/C/RNVS-WS1920/NTP/Block6/ntp.h
+
+/home/viet/viet.Programmierung/C/RNVS-WS1920/NTP/Block6/ntpclient.c
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+sys/socket.h
+-
+netdb.h
+-
+unistd.h
+-
+sys/mman.h
+-
+arpa/inet.h
+-
+time.h
+-
+sys/time.h
+-
+ntp.h
+/home/viet/viet.Programmierung/C/RNVS-WS1920/NTP/Block6/ntp.h
 

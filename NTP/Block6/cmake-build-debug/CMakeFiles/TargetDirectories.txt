@@ -1,3 +1,0 @@
-/mnt/d/RNVS1920/Block6/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/mnt/d/RNVS1920/Block6/cmake-build-debug/CMakeFiles/Block6.dir
-/mnt/d/RNVS1920/Block6/cmake-build-debug/CMakeFiles/edit_cache.dir

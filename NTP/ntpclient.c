@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
 
 
     		// Get Info of the actual peer   
-    		status = getaddrinfo(NULL, ntpPort, &hints, &servinfo);
+    		status = getaddrinfo(argv[i+2], ntpPort, &hints, &servinfo);
     		if (status != 0) {
     		    printf("getaddrinfo error: %s\n",gai_strerror(status));
     		    exit(1);
@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
     		// Send the NTP-Request
     		clock_gettime(CLOCK_REALTIME, &clientClock);
     		double T1_unix = getTimeStamp(clientClock);
+    		printf("T1 = %lf\n", T1_unix);
     		unsigned char* ntpRequest = createNTPRequest(T1_unix);
     		int msglen = sendto(socketfd,ntpRequest,48,0,p->ai_addr,p->ai_addrlen);
     		if ( msglen == -1) {
@@ -80,14 +81,19 @@ int main(int argc, char** argv) {
     		printf("recvfrom: %d\n", msglen);
     		close(socketfd);
     		double T4_unix = getTimeStamp(clientClock);
+    		printf("T4 = %lf\n", T4_unix);
 
     		// Analize the Response
-    		double T2_unix, T3_unix;
+    		double T2_unix = 0;
+    		double T3_unix = 0;
     		float rootDispersion;
     		analizeTheResponse(ntpResponse,&T2_unix,&T3_unix,&rootDispersion);
 
+    		printf("T2 = %lf\n", T2_unix);
+    		printf("T3 = %lf\n", T3_unix);
+    		
     		double delay = (T4_unix - T1_unix) -(T3_unix - T2_unix);
-    		double offset = 0.5*(T2_unix - T3_unix + T3_unix -T4_unix);
+    		double offset = 0.5*(T2_unix - T1_unix + T3_unix -T4_unix);
 
     		printf("%s;%d;%f;%lf,%lf\n",argv[i+2],j+1,rootDispersion,delay,offset);
 		}

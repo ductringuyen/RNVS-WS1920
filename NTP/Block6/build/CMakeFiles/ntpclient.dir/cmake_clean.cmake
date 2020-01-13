@@ -1,8 +1,8 @@
 file(REMOVE_RECURSE
   "CMakeFiles/ntpclient.dir/ntp.c.o"
   "CMakeFiles/ntpclient.dir/ntpclient.c.o"
-  "ntpclient"
   "ntpclient.pdb"
+  "ntpclient"
 )
 
 # Per-language clean rules from dependency scanning.

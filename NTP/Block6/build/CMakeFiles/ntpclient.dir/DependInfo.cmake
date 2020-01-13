@@ -4,8 +4,8 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/mnt/d/RNVS1920/Block6/ntp.c" "/mnt/d/RNVS1920/Block6/build/CMakeFiles/ntpclient.dir/ntp.c.o"
-  "/mnt/d/RNVS1920/Block6/ntpclient.c" "/mnt/d/RNVS1920/Block6/build/CMakeFiles/ntpclient.dir/ntpclient.c.o"
+  "/home/viet/viet.Programmierung/C/RNVS-WS1920/NTP/Block6/ntp.c" "/home/viet/viet.Programmierung/C/RNVS-WS1920/NTP/Block6/build/CMakeFiles/ntpclient.dir/ntp.c.o"
+  "/home/viet/viet.Programmierung/C/RNVS-WS1920/NTP/Block6/ntpclient.c" "/home/viet/viet.Programmierung/C/RNVS-WS1920/NTP/Block6/build/CMakeFiles/ntpclient.dir/ntpclient.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 

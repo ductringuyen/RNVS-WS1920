@@ -39,21 +39,23 @@ unsigned char* createNTPRequest(double t1_unix) {
 }
 
 void analizeTheResponse(unsigned char* response, double* T2, double* T3, float* rootDispersion) {
-    double *T2a = malloc(4);
-    double *T2b = malloc(4);
-    double *T3a = malloc(4);
-    double *T3b =malloc(4);;
+    unsigned int *T2a = malloc(4);
+    unsigned int *T2b = malloc(4);
+    unsigned int *T3a = malloc(4);
+    unsigned int *T3b = malloc(4);
     rv_memcpy(rootDispersion,response+8,4);
     rv_memcpy(T2a,response+32,4);
     rv_memcpy(T2b,response+36,4);
-    rv_memcpy(T3b,response+40,4);
+    rv_memcpy(T3a,response+40,4);
     rv_memcpy(T3b,response+44,4);
+    printf("T2a: %u\n", *T2a);
+    printf("T2b: %u\n", *T2b);
+    printf("T3a: %u\n", *T3a);
+    printf("T3b: %u\n", *T3b);
     *T2 = *T2a + LFP2D(*T2b) - unix_ntp_time_const;
     *T3 = *T3a + LFP2D(*T3b) - unix_ntp_time_const;
     free(T2a);
     free(T2b);
     free(T3a);
     free(T3b);
-
-
 }

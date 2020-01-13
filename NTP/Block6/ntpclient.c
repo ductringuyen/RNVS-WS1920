@@ -92,6 +92,11 @@ int main(int argc, char** argv) {
             float rootDispersion;
             analizeTheResponse(ntpResponse,&T2_unix,&T3_unix,&rootDispersion);
 
+            printf("T1: %lf\n", T1_unix);
+            printf("T2: %lf\n", T2_unix);
+            printf("T3: %lf\n", T3_unix);
+            printf("T4: %lf\n", T4_unix);
+
             double delay = (T4_unix - T1_unix) -(T3_unix - T2_unix);
             double offset = 0.5*(T2_unix - T1_unix + T3_unix -T4_unix);
 

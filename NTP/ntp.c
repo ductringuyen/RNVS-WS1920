@@ -29,7 +29,7 @@ double getTimeStamp(struct timespec clientClock) {
 unsigned char* createNTPRequest(double t1_unix) {
 	double t1_ntp = t1_unix + unix_ntp_time_const;
 	unsigned char* request = calloc(48,1);
-	request[0] = 35; 			 		// first Byte: 00|100|011 -> VN = 4, mode = 3
+	*request = 35; 			 		    // first Byte: 00|100|011 -> VN = 4, mode = 3
 	rv_memcpy(&request+40,&t1_ntp,8);	// seal the Transmit Timestamp
 	return request;
 }

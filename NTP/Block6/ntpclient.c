@@ -22,9 +22,6 @@ struct timespec clientClock;
 int main(int argc, char** argv) {
     requestNumber = atoi(argv[1]);
     int serverNumber = argc-2;
-    char *server[serverNumber];
-    for (int i = 0; i < serverNumber; i++)
-        server[i] = argv[i + 2];
 
     for (int i = 0; i < serverNumber; i++) {
         for (int j = 0; j < requestNumber; j++) {
@@ -42,7 +39,7 @@ int main(int argc, char** argv) {
 
 
             // Get Info of the actual peer
-            status = getaddrinfo(server[i], ntpPort, &hints, &servinfo);
+            status = getaddrinfo(argv[i+2], ntpPort, &hints, &servinfo);
             if (status != 0) {
                 printf("getaddrinfo error: %s\n",gai_strerror(status));
                 exit(1);

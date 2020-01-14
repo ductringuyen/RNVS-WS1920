@@ -1,0 +1,3 @@
+/mnt/d/RNVS1920/Block6/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/mnt/d/RNVS1920/Block6/cmake-build-debug/CMakeFiles/ntpclient.dir
+/mnt/d/RNVS1920/Block6/cmake-build-debug/CMakeFiles/edit_cache.dir

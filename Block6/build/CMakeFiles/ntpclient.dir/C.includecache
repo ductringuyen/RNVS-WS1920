@@ -1,0 +1,34 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/mnt/d/RNVS1920/Block6/ntp.h
+
+/mnt/d/RNVS1920/Block6/ntpclient.c
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+sys/socket.h
+-
+netdb.h
+-
+unistd.h
+-
+sys/mman.h
+-
+arpa/inet.h
+-
+time.h
+-
+sys/time.h
+-
+ntp.h
+/mnt/d/RNVS1920/Block6/ntp.h
+

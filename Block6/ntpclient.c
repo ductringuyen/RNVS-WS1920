@@ -21,9 +21,6 @@ int main(int argc, char** argv) {
     double RTT[requestNumber];
 
     for (int i = 0; i < serverNumber; i++) {
-        for (int m = 0; m<requestNumber;m++){
-            RTT[m] =0;
-        }
         for (int j = 0; j < requestNumber; j++) {
 
             // Get Server Info and send NTP Request
@@ -89,9 +86,15 @@ int main(int argc, char** argv) {
             float rootDispersion;
             analizeTheResponse(ntpResponse,&T2_unix,&T3_unix,&rootDispersion);
 
-            RTT[j] = (T4_unix - T1_unix) -(T3_unix - T2_unix);
-            RTT[35] = RTT[34];
+            printf("RTT[35]= %lf \n",RTT[35]);
+            printf("RTT[34]= %lf \n",RTT[34]);
+            printf("RTT[33]= %lf \n",RTT[33]);
+            printf("RTT[99]= %lf \n",RTT[99]);
+            printf("RTT[36]= %lf \n",RTT[36]);
 
+            RTT[j] = (T4_unix - T1_unix) -(T3_unix - T2_unix);
+            //RTT[35] = RTT[34];
+            printf("RTT[%d] = %lf \n",j,RTT[j]);
             double delay = RTT[j]/2;
             double offset = (T2_unix - T1_unix + T3_unix -T4_unix)/2;
             double Dispersion_of_8_Anfragen;
@@ -101,11 +104,11 @@ int main(int argc, char** argv) {
                 for (int a = j - 6; a <= j; a++) {
                     if (RTT[a] < RTT_min) {
                         RTT_min = RTT[a];
-                       // printf ("min: %lf of RTT: %d \n" ,RTT_min,a);
+                        printf ("min: %lf of RTT: %d \n" ,RTT_min,a);
                     }
                     if (RTT[a] > RTT_max) {
                         RTT_max = RTT[a];
-                       // printf ("max: %lf of RTT: %d \n" ,RTT_max,a);
+                        printf ("max: %lf of RTT: %d \n" ,RTT_max,a);
                     }
                 }
             } else {

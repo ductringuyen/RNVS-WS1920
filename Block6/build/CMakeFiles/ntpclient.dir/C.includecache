@@ -21,10 +21,6 @@ netdb.h
 -
 unistd.h
 -
-sys/mman.h
--
-arpa/inet.h
--
 time.h
 -
 sys/time.h

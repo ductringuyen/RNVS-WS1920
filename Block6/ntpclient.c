@@ -9,11 +9,6 @@
 #include "ntp.h"
 
 #define ntpPort  "123"
-#define unix_ntp_time_const 2208988800
-
-#define FRAC       4294967296.             /* 2^32 as a double */
-#define LFP2D(a)   ((double)(a) / FRAC)
-
 
 int requestNumber;
 struct timespec clientClock;
@@ -102,11 +97,16 @@ int main(int argc, char** argv) {
                     if (RTT[a] < RTT_min[j]) RTT_min[j] = RTT[a];
                     if (RTT[a] > RTT_max[j]) RTT_max[j] = RTT[a];
                 }
-                Dispersion_of_8_Anfragen = RTT_max[j] - RTT_min[j];
             } else {
-                Dispersion_of_8_Anfragen = 0;
+                RTT_min[j] = RTT[0];
+                RTT_max[j] = RTT[0];
+                for (int a = 0; a<=j ;a++) {
+                    if (RTT[a] < RTT_min[j]) RTT_min[j] = RTT[a];
+                    if (RTT[a] > RTT_max[j]) RTT_max[j] = RTT[a];
+                }
             }
 
+            Dispersion_of_8_Anfragen = RTT_max[j] - RTT_min[j];
             printf("%s;   %d;    %f;    %lf;    %lf;    %lf\n",argv[i+2],j+1,rootDispersion,Dispersion_of_8_Anfragen,delay,offset);
             printf("%lf;    %lf;     %lf;      %lf\n",T1_unix,T2_unix,T3_unix,T4_unix);
             sleep(1);

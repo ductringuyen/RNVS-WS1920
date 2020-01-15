@@ -19,20 +19,18 @@ int main(int argc, char** argv) {
     double RTT_max;
     double RTT_min;
     double *RTT = calloc(requestNumber,sizeof(double));
-     //double RTT[requestNumber];
+    //double RTT[requestNumber]; // error with RTT[35] no idea why
 
     for (int i = 0; i < serverNumber; i++) {
         // Get Server Info and send NTP Request
         struct addrinfo hints, *servinfo, *p ;
         unsigned int status;
         int socketfd;		    				   // the send socket
-
         memset(&hints, 0, sizeof hints);    	   // hints is empty
 
         hints.ai_family = AF_INET;        	   	   // IPv4
         hints.ai_socktype = SOCK_DGRAM;            // Datagram listener
         hints.ai_flags = AI_PASSIVE;               // Use my IP
-
 
         // Get Info of the actual peer
         status = getaddrinfo(argv[i+2], ntpPort, &hints, &servinfo);
@@ -48,14 +46,10 @@ int main(int argc, char** argv) {
                 perror("Failed to create a socket\n");
                 continue;
             }
-
             break;
         }
 
         for (int j = 0; j < requestNumber; j++) {
-
-
-
             // Send the NTP-Request
             clock_gettime(CLOCK_REALTIME, &clientClock);
             double T1_unix = getTimeStamp(clientClock);
@@ -67,7 +61,6 @@ int main(int argc, char** argv) {
             }
             //printf("sendto: %d\n",msglen);
 
-
             // Receive the NTP-Response
             unsigned char* ntpResponse = malloc(48);
             struct sockaddr_storage serverAddrInfo;    	   // connector's addresponses Info
@@ -77,7 +70,6 @@ int main(int argc, char** argv) {
                 perror("recvfrom");
                 exit(1);
             }
-
 
             clock_gettime(CLOCK_REALTIME,&clientClock);
             //printf("recvfrom: %d\n", msglen);
@@ -93,10 +85,8 @@ int main(int argc, char** argv) {
             //printf("RTT[35]= %lf \n",RTT[35]);
             //printf("RTT[99]= %lf \n",RTT[99]);
 
-
             RTT[j] = (T4_unix - T1_unix) -(T3_unix - T2_unix);
 
-            //RTT[35] = RTT[34];
             //printf("RTT[%d] = %lf \n",j,RTT[j]);
             double delay = RTT[j]/2;
             double offset = (T2_unix - T1_unix + T3_unix -T4_unix)/2;
@@ -128,12 +118,11 @@ int main(int argc, char** argv) {
                     }
                 }
             }
-            //if (offset <-100000) offset = 0;
             Dispersion_of_8_Anfragen = RTT_max - RTT_min;
             printf("%s;   %d;    %f;    %lf;    %lf;    %lf\n",argv[i+2],j+1,rootDispersion,Dispersion_of_8_Anfragen,delay,offset);
-            //if(j = 35) RTT[35] = RTT[j];
+
             //printf("%lf;    %lf;     %lf;      %lf\n",T1_unix,T2_unix,T3_unix,T4_unix);
-            sleep(2);
+            sleep(8);
         }
         freeaddrinfo(servinfo);
         close(socketfd);

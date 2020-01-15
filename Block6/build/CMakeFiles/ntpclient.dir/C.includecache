@@ -6,6 +6,16 @@
 
 #IncludeRegexTransform: 
 
+/mnt/d/RNVS1920/Block6/ntp.c
+stdlib.h
+-
+arpa/inet.h
+-
+time.h
+-
+ntp.h
+/mnt/d/RNVS1920/Block6/ntp.h
+
 /mnt/d/RNVS1920/Block6/ntp.h
 
 /mnt/d/RNVS1920/Block6/ntpclient.c

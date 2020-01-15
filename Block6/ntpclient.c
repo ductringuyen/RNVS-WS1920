@@ -22,37 +22,39 @@ int main(int argc, char** argv) {
      //double RTT[requestNumber];
 
     for (int i = 0; i < serverNumber; i++) {
+        // Get Server Info and send NTP Request
+        struct addrinfo hints, *servinfo, *p ;
+        unsigned int status;
+        int socketfd;		    				   // the send socket
+
+        memset(&hints, 0, sizeof hints);    	   // hints is empty
+
+        hints.ai_family = AF_INET;        	   	   // IPv4
+        hints.ai_socktype = SOCK_DGRAM;            // Datagram listener
+        hints.ai_flags = AI_PASSIVE;               // Use my IP
+
+
+        // Get Info of the actual peer
+        status = getaddrinfo(argv[i+2], ntpPort, &hints, &servinfo);
+        if (status != 0) {
+            printf("getaddrinfo error: %s\n",gai_strerror(status));
+            exit(1);
+        }
+
+        for(p = servinfo; p != NULL; p = p->ai_next) {
+            // Create a Socket
+            socketfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+            if (socketfd == -1) {
+                perror("Failed to create a socket\n");
+                continue;
+            }
+
+            break;
+        }
+
         for (int j = 0; j < requestNumber; j++) {
 
-            // Get Server Info and send NTP Request
-            struct addrinfo hints, *servinfo, *p ;
-            unsigned int status;
-            int socketfd;		    				   // the send socket
 
-            memset(&hints, 0, sizeof hints);    	   // hints is empty
-
-            hints.ai_family = AF_INET;        	   	   // IPv4
-            hints.ai_socktype = SOCK_DGRAM;            // Datagram listener
-            hints.ai_flags = AI_PASSIVE;               // Use my IP
-
-
-            // Get Info of the actual peer
-            status = getaddrinfo(argv[i+2], ntpPort, &hints, &servinfo);
-            if (status != 0) {
-                printf("getaddrinfo error: %s\n",gai_strerror(status));
-                exit(1);
-            }
-
-            for(p = servinfo; p != NULL; p = p->ai_next) {
-                // Create a Socket
-                socketfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-                if (socketfd == -1) {
-                    perror("Failed to create a socket\n");
-                    continue;
-                }
-
-                break;
-            }
 
             // Send the NTP-Request
             clock_gettime(CLOCK_REALTIME, &clientClock);
@@ -64,7 +66,7 @@ int main(int argc, char** argv) {
                 exit(1);
             }
             //printf("sendto: %d\n",msglen);
-            freeaddrinfo(servinfo);
+
 
             // Receive the NTP-Response
             unsigned char* ntpResponse = malloc(48);
@@ -75,11 +77,11 @@ int main(int argc, char** argv) {
                 perror("recvfrom");
                 exit(1);
             }
-            close(socketfd);
+
 
             clock_gettime(CLOCK_REALTIME,&clientClock);
             //printf("recvfrom: %d\n", msglen);
-            close(socketfd);
+
             double T4_unix = getTimeStamp(clientClock);
 
             // Analize the Response
@@ -131,7 +133,10 @@ int main(int argc, char** argv) {
             printf("%s;   %d;    %f;    %lf;    %lf;    %lf\n",argv[i+2],j+1,rootDispersion,Dispersion_of_8_Anfragen,delay,offset);
             //if(j = 35) RTT[35] = RTT[j];
             //printf("%lf;    %lf;     %lf;      %lf\n",T1_unix,T2_unix,T3_unix,T4_unix);
-            sleep(1);
+            sleep(2);
         }
+        freeaddrinfo(servinfo);
+        close(socketfd);
+
     }
 }

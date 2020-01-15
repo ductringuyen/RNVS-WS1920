@@ -60,28 +60,28 @@ include CMakeFiles/ntpclient.dir/flags.make
 CMakeFiles/ntpclient.dir/ntp.c.o: CMakeFiles/ntpclient.dir/flags.make
 CMakeFiles/ntpclient.dir/ntp.c.o: ../ntp.c
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/d/RNVS1920/Block6/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/ntpclient.dir/ntp.c.o"
-	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/ntpclient.dir/ntp.c.o   -c /mnt/d/RNVS1920/Block6/ntp.c
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/ntpclient.dir/ntp.c.o   -c /mnt/d/RNVS1920/Block6/ntp.c
 
 CMakeFiles/ntpclient.dir/ntp.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/ntpclient.dir/ntp.c.i"
-	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/d/RNVS1920/Block6/ntp.c > CMakeFiles/ntpclient.dir/ntp.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/d/RNVS1920/Block6/ntp.c > CMakeFiles/ntpclient.dir/ntp.c.i
 
 CMakeFiles/ntpclient.dir/ntp.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/ntpclient.dir/ntp.c.s"
-	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/d/RNVS1920/Block6/ntp.c -o CMakeFiles/ntpclient.dir/ntp.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/d/RNVS1920/Block6/ntp.c -o CMakeFiles/ntpclient.dir/ntp.c.s
 
 CMakeFiles/ntpclient.dir/ntpclient.c.o: CMakeFiles/ntpclient.dir/flags.make
 CMakeFiles/ntpclient.dir/ntpclient.c.o: ../ntpclient.c
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/mnt/d/RNVS1920/Block6/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/ntpclient.dir/ntpclient.c.o"
-	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/ntpclient.dir/ntpclient.c.o   -c /mnt/d/RNVS1920/Block6/ntpclient.c
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/ntpclient.dir/ntpclient.c.o   -c /mnt/d/RNVS1920/Block6/ntpclient.c
 
 CMakeFiles/ntpclient.dir/ntpclient.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/ntpclient.dir/ntpclient.c.i"
-	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/d/RNVS1920/Block6/ntpclient.c > CMakeFiles/ntpclient.dir/ntpclient.c.i
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /mnt/d/RNVS1920/Block6/ntpclient.c > CMakeFiles/ntpclient.dir/ntpclient.c.i
 
 CMakeFiles/ntpclient.dir/ntpclient.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/ntpclient.dir/ntpclient.c.s"
-	clang $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/d/RNVS1920/Block6/ntpclient.c -o CMakeFiles/ntpclient.dir/ntpclient.c.s
+	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /mnt/d/RNVS1920/Block6/ntpclient.c -o CMakeFiles/ntpclient.dir/ntpclient.c.s
 
 # Object files for target ntpclient
 ntpclient_OBJECTS = \

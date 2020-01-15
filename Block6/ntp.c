@@ -57,8 +57,8 @@ void analizeTheResponse(unsigned char* response, double * T2, double * T3, float
     rv_memcpy(rootDispersion_b,response+10,2);
     *rootDispersion = *rootDispersion_a + FP2D(*rootDispersion_b) ;
 
-    printf("rootDisa: %u\n", *rootDispersion_a);
-    printf("rootDisb: %u\n", *rootDispersion_b);
+    //printf("rootDisa: %u\n", *rootDispersion_a);
+    //printf("rootDisb: %u\n", *rootDispersion_b);
 
     free(T2a);
     free(T2b);

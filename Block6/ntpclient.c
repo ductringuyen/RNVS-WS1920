@@ -16,10 +16,14 @@ struct timespec clientClock;
 int main(int argc, char** argv) {
     requestNumber = atoi(argv[1]);
     int serverNumber = argc-2;
-    double RTT_max[serverNumber];
-    double RTT_min[serverNumber];
-    double RTT[serverNumber];
+    double RTT_max;
+    double RTT_min;
+    double RTT[requestNumber];
+
     for (int i = 0; i < serverNumber; i++) {
+        for (int m = 0; m<requestNumber;m++){
+            RTT[m] =0;
+        }
         for (int j = 0; j < requestNumber; j++) {
 
             // Get Server Info and send NTP Request
@@ -61,7 +65,7 @@ int main(int argc, char** argv) {
                 perror("sendto");
                 exit(1);
             }
-            printf("sendto: %d\n",msglen);
+            //printf("sendto: %d\n",msglen);
             freeaddrinfo(servinfo);
 
             // Receive the NTP-Response
@@ -76,7 +80,7 @@ int main(int argc, char** argv) {
             close(socketfd);
 
             clock_gettime(CLOCK_REALTIME,&clientClock);
-            printf("recvfrom: %d\n", msglen);
+            //printf("recvfrom: %d\n", msglen);
             close(socketfd);
             double T4_unix = getTimeStamp(clientClock);
 
@@ -86,29 +90,42 @@ int main(int argc, char** argv) {
             analizeTheResponse(ntpResponse,&T2_unix,&T3_unix,&rootDispersion);
 
             RTT[j] = (T4_unix - T1_unix) -(T3_unix - T2_unix);
+            RTT[35] = RTT[34];
 
             double delay = RTT[j]/2;
             double offset = (T2_unix - T1_unix + T3_unix -T4_unix)/2;
             double Dispersion_of_8_Anfragen;
             if (j >6) {
-                RTT_min[j] = RTT[j-7];
-                RTT_max[j] = RTT[j-7];
+                RTT_min = RTT[j-7];
+                RTT_max = RTT[j-7];
                 for (int a = j - 6; a <= j; a++) {
-                    if (RTT[a] < RTT_min[j]) RTT_min[j] = RTT[a];
-                    if (RTT[a] > RTT_max[j]) RTT_max[j] = RTT[a];
+                    if (RTT[a] < RTT_min) {
+                        RTT_min = RTT[a];
+                       // printf ("min: %lf of RTT: %d \n" ,RTT_min,a);
+                    }
+                    if (RTT[a] > RTT_max) {
+                        RTT_max = RTT[a];
+                       // printf ("max: %lf of RTT: %d \n" ,RTT_max,a);
+                    }
                 }
             } else {
-                RTT_min[j] = RTT[0];
-                RTT_max[j] = RTT[0];
+                RTT_min = RTT[0];
+                RTT_max = RTT[0];
                 for (int a = 0; a<=j ;a++) {
-                    if (RTT[a] < RTT_min[j]) RTT_min[j] = RTT[a];
-                    if (RTT[a] > RTT_max[j]) RTT_max[j] = RTT[a];
+                    if (RTT[a] < RTT_min) {
+                        RTT_min = RTT[a];
+                       // printf ("min: %lf \n" ,RTT_min);
+                    }
+                    if (RTT[a] > RTT_max) {
+                        RTT_max = RTT[a];
+                       // printf ("max: %lf \n" ,RTT_max);
+                    }
                 }
             }
-
-            Dispersion_of_8_Anfragen = RTT_max[j] - RTT_min[j];
+            //if (offset <-100000) offset = 0;
+            Dispersion_of_8_Anfragen = RTT_max - RTT_min;
             printf("%s;   %d;    %f;    %lf;    %lf;    %lf\n",argv[i+2],j+1,rootDispersion,Dispersion_of_8_Anfragen,delay,offset);
-            printf("%lf;    %lf;     %lf;      %lf\n",T1_unix,T2_unix,T3_unix,T4_unix);
+            //printf("%lf;    %lf;     %lf;      %lf\n",T1_unix,T2_unix,T3_unix,T4_unix);
             sleep(1);
         }
     }

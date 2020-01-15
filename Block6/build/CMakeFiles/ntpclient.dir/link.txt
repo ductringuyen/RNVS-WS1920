@@ -1,1 +1,1 @@
-clang    CMakeFiles/ntpclient.dir/ntp.c.o CMakeFiles/ntpclient.dir/ntpclient.c.o  -o ntpclient 
+/usr/bin/cc    CMakeFiles/ntpclient.dir/ntp.c.o CMakeFiles/ntpclient.dir/ntpclient.c.o  -o ntpclient 
